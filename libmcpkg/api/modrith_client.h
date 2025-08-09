@@ -53,16 +53,6 @@ int modrith_client_update(ModrithApiClient *client_data);
  */
 int modrith_client_install(ModrithApiClient *client, const char *id_or_slug);
 
-/**
- * Download a file via HTTP to a destination path, optionally verifying sha512.
- *
- * @param api ApiClient pointer.
- * @param url URL to download.
- * @param sha_hex_or_null Expected SHA512 hex (optional).
- * @param dest_path Destination file path.
- * @return MCPKG_ERROR_* code.
- */
-int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_or_null, const char *dest_path);
 
 /**
  * Fetch versions JSON array for a given project ID or slug filtered by loader and MC version.

@@ -5,6 +5,7 @@
 #include <msgpack.h>
 #include <cjson/cJSON.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "utils/array_helper.h"
 #include "api/mcpkg_deps_entry.h"
@@ -40,4 +41,10 @@ int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry);
 /** Converts an McPkgEntry to a debug string (caller frees). */
 char *mcpkg_entry_to_string(const McPkgEntry *entry);
 
+static void mcpkg_sleep_ms(long milliseconds) {
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, &ts);
+}
 #endif /* MCPKG_ENTRY_H */

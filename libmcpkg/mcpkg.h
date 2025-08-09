@@ -9,6 +9,7 @@
 #define MCPKG_USER_AGENT "m_jimmer/mcpkg/" MCPKG_VERSION
 #endif
 
+
 #ifndef MODRINTH_API_SEARCH_URL_BASE
 #define MODRINTH_API_SEARCH_URL_BASE "https://api.modrinth.com/v2/search"
 #endif
@@ -17,13 +18,11 @@
 #define MCPKG_CACHE         "/var/cache/mcpkg/"
 #endif
 
-// --- Environment Variable Keys ---
 
+#define ENV_MC_BASE             "MC_BASE"
 #define ENV_MC_VERSION          "MC_VERSION"
 #define ENV_MC_LOADER           "MC_LOADER"
 #define ENV_MCPKG_CACHE         "MCPKG_CACHE"
-
-// --- Mod Loader Definitions ---
 
 typedef enum {
     MOD_LOADER_FABRIC,
@@ -34,16 +33,12 @@ typedef enum {
     MOD_LOADER_UNKNOWN
 } mod_loader_type;
 
-// --- Provider Definitions ---
-
 typedef enum {
     PROVIDER_MODRITH,
     PROVIDER_CURSEFORGE,
     PROVIDER_HANGAR,
     PROVIDER_LOCAL
 } provider_type;
-
-// --- Error Types ---
 
 typedef enum {
     MCPKG_ERROR_SUCCESS,
@@ -55,13 +50,5 @@ typedef enum {
     MCPKG_ERROR_VERSION_MISMATCH,
     MCPKG_ERROR_OOM
 } mcpkg_error_types;
-
-// --- Main Function Prototypes ---
-
-/**
- * @brief Initializes the mcpkg environment and configuration.
- * @return 0 on success, non-zero on failure.
- */
-int mcpkg_init();
 
 #endif // MCPKG_H

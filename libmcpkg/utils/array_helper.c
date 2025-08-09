@@ -1,8 +1,11 @@
 #include "array_helper.h"
+#include <cjson/cJSON.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "mcpkg.h"
+
+
 static int str_array_grow(str_array *arr, size_t min_capacity) {
     size_t new_capacity = arr->capacity ? arr->capacity : 4;
     while (new_capacity < min_capacity) new_capacity <<= 1;
@@ -109,3 +112,4 @@ char *str_array_to_string(const str_array *arr) {
     *p = '\0';
     return out;
 }
+

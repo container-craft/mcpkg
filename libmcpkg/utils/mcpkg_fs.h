@@ -43,6 +43,11 @@ static int ensure_dir(const char *p) {
     return (mkdir_p(p) == MCPKG_ERROR_SUCCESS) ? 0 : 1;
 }
 
+mcpkg_error_types mcpkg_copy_tree(const char *src, const char *dst);
 
+
+mcpkg_error_types mcpkg_remove_tree(const char *path);
+
+mcpkg_error_types mcpkg_unlink_any(const char *path);
 
 #endif // MCPKG_FS_H

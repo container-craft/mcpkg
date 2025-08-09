@@ -8,48 +8,16 @@
 #include <time.h>
 #include <zstd.h>
 #include <libgen.h>
-#include <errno.h>
-#include <ctype.h>
 
 #include "mcpkg.h"
 #include "utils/code_names.h"
 #include "utils/mcpkg_fs.h"
 #include "mcpkg_info_entry.h"
 #include "mcpkg_cache.h"
+#include "mcpkg_get.h"
 #include "api/mcpkg_entry.h"
 #include "api/mcpkg_deps_entry.h"
-
-// --- Config ---
-
-#ifndef MODRINTH_API_SEARCH_URL_BASE
-#define MODRINTH_API_SEARCH_URL_BASE "https://api.modrinth.com/v2/search"
-#endif
-
-// --- Small sleep helper ---
-
-static void mcpkg_sleep_ms(long milliseconds) {
-    struct timespec ts;
-    ts.tv_sec = milliseconds / 1000;
-    ts.tv_nsec = (milliseconds % 1000) * 1000000;
-    nanosleep(&ts, &ts);
-}
-
-// --- JSON helpers for search hits -> McPkgInfoEntry ---
-
-static str_array *cjson_to_str_array(cJSON *json_array) {
-    if (!cJSON_IsArray(json_array)) return NULL;
-
-    str_array *arr = str_array_new();
-    if (!arr) return NULL;
-
-    cJSON *item;
-    cJSON_ArrayForEach(item, json_array) {
-        if (cJSON_IsString(item) && item->valuestring) {
-            str_array_add(arr, item->valuestring);
-        }
-    }
-    return arr;
-}
+#include "utils/array_helper.h"
 
 static McPkgInfoEntry *mcpkg_info_entry_from_cjson(cJSON *mod_item) {
     if (!cJSON_IsObject(mod_item)) return NULL;
@@ -104,37 +72,6 @@ static McPkgInfoEntry *mcpkg_info_entry_from_cjson(cJSON *mod_item) {
     return entry;
 }
 
-// --- Compression helper for Packages.info.zstd ---
-
-static int write_compressed_cache(const char *file_path, const void *data, size_t size) {
-    FILE *fp = fopen(file_path, "wb");
-    if (!fp) {
-        perror("Failed to open compressed file");
-        return MCPKG_ERROR_GENERAL;
-    }
-
-    size_t compressed_size = ZSTD_compressBound(size);
-    void *compressed_data = malloc(compressed_size);
-    if (!compressed_data) {
-        fclose(fp);
-        return MCPKG_ERROR_GENERAL;
-    }
-
-    size_t result = ZSTD_compress(compressed_data, compressed_size, data, size, 1);
-    if (ZSTD_isError(result)) {
-        fprintf(stderr, "ZSTD compression failed: %s\n", ZSTD_getErrorName(result));
-        free(compressed_data);
-        fclose(fp);
-        return MCPKG_ERROR_GENERAL;
-    }
-
-    fwrite(compressed_data, 1, result, fp);
-    free(compressed_data);
-    fclose(fp);
-    return MCPKG_ERROR_SUCCESS;
-}
-
-// --- Public client lifecycle ---
 
 ModrithApiClient *modrith_client_new(const char *mc_version, const char *mod_loader) {
     ModrithApiClient *client_data = calloc(1, sizeof(ModrithApiClient));
@@ -154,14 +91,13 @@ ModrithApiClient *modrith_client_new(const char *mc_version, const char *mod_loa
 }
 
 void modrith_client_free(ModrithApiClient *client_data) {
-    if (!client_data) return;
+    if (!client_data)
+        return;
     api_client_free(client_data->client);
     free(client_data->mc_version);
     free(client_data->mod_loader);
     free(client_data);
 }
-
-// --- Update local Packages.info(+.zstd) via search API ---
 
 int modrith_client_update(ModrithApiClient *client_data) {
     size_t offset = 0;
@@ -283,148 +219,6 @@ int modrith_client_update(ModrithApiClient *client_data) {
     return MCPKG_ERROR_SUCCESS;
 }
 
-// ===========================
-//   INSTALL FLOW + HELPERS
-// ===========================
-/* -------- Visited set for cycle prevention -------- */
-
-typedef struct {
-    char **ids;
-    size_t count, cap;
-} VisitedSet;
-
-static void visited_free(VisitedSet *vs) {
-    if (!vs) return;
-    for (size_t i = 0; i < vs->count; ++i) free(vs->ids[i]);
-    free(vs->ids);
-    memset(vs, 0, sizeof(*vs));
-}
-
-static int visited_contains(VisitedSet *vs, const char *id) {
-    if (!vs || !id) return 0;
-    for (size_t i = 0; i < vs->count; ++i) {
-        if (vs->ids[i] && strcmp(vs->ids[i], id) == 0) return 1;
-    }
-    return 0;
-}
-
-static int visited_add(VisitedSet *vs, const char *id) {
-    if (!vs || !id) return 1;
-    if (visited_contains(vs, id)) return 0;
-    if (vs->count == vs->cap) {
-        size_t ncap = vs->cap ? vs->cap * 2 : 8;
-        char **tmp = realloc(vs->ids, ncap * sizeof(*tmp));
-        if (!tmp) return 1;
-        vs->ids = tmp; vs->cap = ncap;
-    }
-    vs->ids[vs->count++] = strdup(id);
-    return 0;
-}
-
-/* -------- Install DB quick lookup -------- */
-/* -------- API: fetch specific version by id -------- */
-// Load all `McPkgEntry` from Packages.install (if it exists)
-static int install_db_load(const char *path, McPkgEntry ***out_entries, size_t *out_count) {
-    *out_entries = NULL; *out_count = 0;
-    if (access(path, F_OK) != 0) return 0; // missing is fine
-
-    char *data = NULL; size_t n = 0;
-    if (mcpkg_read_cache_file(path, &data, &n) != MCPKG_ERROR_SUCCESS) return 1;
-
-    msgpack_unpacked up; msgpack_unpacked_init(&up);
-    size_t off = 0, cap = 8;
-    McPkgEntry **arr = malloc(cap * sizeof(*arr));
-    if (!arr) { free(data); msgpack_unpacked_destroy(&up); return 1; }
-
-    while (msgpack_unpack_next(&up, data, n, &off)) {
-        if (up.data.type != MSGPACK_OBJECT_MAP) continue;
-        McPkgEntry *e = mcpkg_entry_new();
-        if (!e) continue;
-        if (mcpkg_entry_unpack(&up.data, e) != 0) { mcpkg_entry_free(e); continue; }
-        if (*out_count >= cap) { cap *= 2; arr = realloc(arr, cap*sizeof(*arr)); if (!arr) break; }
-        arr[(*out_count)++] = e;
-    }
-    msgpack_unpacked_destroy(&up);
-    free(data);
-    *out_entries = arr;
-    return 0;
-}
-
-static int install_db_is_installed_exact(const char *path, const char *project_id, const char *version_str) {
-    if (!project_id || !version_str) return 0;
-
-    McPkgEntry **entries = NULL; size_t count = 0;
-    if (install_db_load(path, &entries, &count) != 0) return 0;
-
-    int found = 0;
-    for (size_t i = 0; i < count; ++i) {
-        McPkgEntry *e = entries[i];
-        if (!e) continue;
-        if (e->id && e->version && strcmp(e->id, project_id) == 0 && strcmp(e->version, version_str) == 0) {
-            found = 1;
-        }
-        mcpkg_entry_free(e);
-    }
-    free(entries);
-    return found;
-}
-
-
-
-static int install_db_save(const char *path, McPkgEntry **entries, size_t count) {
-    // ensure directory
-    char *dup = strdup(path);
-    if (!dup) return 1;
-    char *slash = strrchr(dup, '/');
-    if (slash) { *slash = '\0'; if (ensure_dir(dup) != 0) { free(dup); return 1; } }
-    free(dup);
-
-    msgpack_sbuffer sb; msgpack_sbuffer_init(&sb);
-    for (size_t i = 0; i < count; ++i) {
-        if (!entries[i]) continue;
-        if (mcpkg_entry_pack(entries[i], &sb) != 0) { msgpack_sbuffer_destroy(&sb); return 1; }
-    }
-    FILE *fp = fopen(path, "wb");
-    if (!fp) { msgpack_sbuffer_destroy(&sb); return 1; }
-    fwrite(sb.data, 1, sb.size, fp);
-    fclose(fp);
-    msgpack_sbuffer_destroy(&sb);
-    return 0;
-}
-// Replace or append by project id (or slug/name as fallback)
-static int install_db_upsert_entry(const char *path, McPkgEntry *new_entry) {
-    McPkgEntry **entries = NULL; size_t count = 0;
-    if (install_db_load(path, &entries, &count) != 0) return 1;
-
-    size_t idx = count;
-    for (size_t i = 0; i < count; ++i) {
-        if (!entries[i]) continue;
-        if ((entries[i]->id && new_entry->id && strcmp(entries[i]->id, new_entry->id) == 0) ||
-            (entries[i]->name && new_entry->name && strcmp(entries[i]->name, new_entry->name) == 0)) {
-            idx = i; break;
-        }
-    }
-
-    if (idx == count) {
-        McPkgEntry **tmp = realloc(entries, (count+1)*sizeof(*entries));
-        if (!tmp) {
-            for (size_t i = 0; i < count; ++i) mcpkg_entry_free(entries[i]);
-            free(entries);
-            return 1;
-        }
-        entries = tmp;
-        entries[count++] = new_entry;
-    } else {
-        mcpkg_entry_free(entries[idx]);
-        entries[idx] = new_entry;
-    }
-
-    int rc = install_db_save(path, entries, count);
-    for (size_t i = 0; i < count; ++i) if (entries[i]) mcpkg_entry_free(entries[i]);
-    free(entries);
-    return rc;
-}
-
 static cJSON *modrith_get_version_by_id(ModrithApiClient *client, const char *version_id) {
     if (!client || !version_id) return NULL;
     char url[1024];
@@ -434,45 +228,6 @@ static cJSON *modrith_get_version_by_id(ModrithApiClient *client, const char *ve
     return json;
 }
 
-static int install_single_entry(ModrithApiClient *client,
-                                const char *mods_dir, const char *install_db,
-                                McPkgEntry *entry) {
-    if (!entry || !entry->file_name || !entry->url || !entry->id || !entry->version)
-        return MCPKG_ERROR_PARSE;
-
-    /* If already installed at the exact version, optionally refresh DB and return */
-    if (install_db_is_installed_exact(install_db, entry->id, entry->version)) {
-        /* Optional: keep DB fresh; NOTE: upsert takes ownership, so don't touch entry after this */
-        (void)install_db_upsert_entry(install_db, entry);
-        return MCPKG_ERROR_SUCCESS;
-    }
-
-    /* Download JAR first (we still own entry here) */
-    char *dest = NULL;
-    if (asprintf(&dest, "%s/%s", mods_dir, entry->file_name) < 0)
-        return MCPKG_ERROR_OOM;
-
-    int rc = http_download_to_file(client->client, entry->url, entry->sha, dest);
-    free(dest);
-    if (rc != MCPKG_ERROR_SUCCESS) {
-        return rc;
-    }
-
-    /* Now record it in Packages.install; upsert TAKES OWNERSHIP of entry. */
-    rc = install_db_upsert_entry(install_db, entry);
-    /* On success: do not use or free 'entry' anymore (ownership transferred) */
-    if (rc != 0) {
-        /* If you want to be tidy, you could unlink the downloaded file on failure. */
-        return MCPKG_ERROR_FS;
-    }
-
-    return MCPKG_ERROR_SUCCESS;
-}
-
-static int dep_is_required(const char *type) {
-    // Modrinth types: required, optional, incompatible, embedded, (and sometimes "soft" aka optional)
-    return (type && strcmp(type, "required") == 0);
-}
 
 static int resolve_and_install(ModrithApiClient *client,
                                const char *id_or_slug,
@@ -549,10 +304,6 @@ static int resolve_and_install(ModrithApiClient *client,
 
     return MCPKG_ERROR_SUCCESS;
 }
-
-
-
-
 
 
 // GET /v2/project/{id|slug}/version?loaders=[..]&game_versions=[..]
@@ -719,34 +470,6 @@ int modrith_version_to_entry(cJSON *v, McPkgEntry **out) {
     return 0;
 }
 
-
-// Simple download (sha verification TODO)
-int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_or_null, const char *dest_path) {
-    (void)sha_hex_or_null; // TODO: implement sha512 verify
-    if (!api || !api->curl || !url || !dest_path)
-        return MCPKG_ERROR_GENERAL;
-
-    FILE *fp = fopen(dest_path, "wb");
-    if (!fp)
-        return MCPKG_ERROR_FS;
-
-    curl_easy_setopt(api->curl, CURLOPT_URL, url);
-    curl_easy_setopt(api->curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(api->curl, CURLOPT_WRITEDATA, fp);
-    curl_easy_setopt(api->curl, CURLOPT_WRITEFUNCTION, NULL);
-    curl_easy_setopt(api->curl, CURLOPT_USERAGENT, MCPKG_USER_AGENT);
-
-    CURLcode res = curl_easy_perform(api->curl);
-    fclose(fp);
-    if (res != CURLE_OK) {
-        unlink(dest_path);
-        fprintf(stderr, "Download failed: %s\n", curl_easy_strerror(res));
-        return MCPKG_ERROR_NETWORK;
-    }
-    return MCPKG_ERROR_SUCCESS;
-}
-
-// --- High-level install ---
 
 int modrith_client_install(ModrithApiClient *client, const char *id_or_slug) {
     if (!client || !id_or_slug)

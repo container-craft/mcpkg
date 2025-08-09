@@ -1,6 +1,7 @@
 #ifndef MCPKG_ARRAY_HELPER_H
 #define MCPKG_ARRAY_HELPER_H
 
+#include <cjson/cJSON.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <msgpack/pack.h>
@@ -26,5 +27,19 @@ void str_array_pack(msgpack_packer *pk, const str_array *arr);
 
 /* Join as "[a, b, c]" (no quotes). Caller owns the returned buffer. */
 char *str_array_to_string(const str_array *arr);
+static str_array *cjson_to_str_array(cJSON *json_array) {
+    if (!cJSON_IsArray(json_array)) return NULL;
+
+    str_array *arr = str_array_new();
+    if (!arr) return NULL;
+
+    cJSON *item;
+    cJSON_ArrayForEach(item, json_array) {
+        if (cJSON_IsString(item) && item->valuestring) {
+            str_array_add(arr, item->valuestring);
+        }
+    }
+    return arr;
+}
 
 #endif /* MCPKG_ARRAY_HELPER_H */
