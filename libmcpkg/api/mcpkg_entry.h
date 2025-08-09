@@ -9,8 +9,6 @@
 #include "utils/array_helper.h"
 #include "api/mcpkg_deps_entry.h"
 
-typedef struct McPkgEntry McPkgEntry;
-
 typedef struct McPkgEntry {
     char *id;
     char *name;
@@ -27,40 +25,19 @@ typedef struct McPkgEntry {
     size_t dependencies_count;
 } McPkgEntry;
 
+/** Allocates and initializes a new McPkgEntry struct (arrays pre-created). */
+McPkgEntry *mcpkg_entry_new(void);
 
-/**
- * @brief Allocates and initializes a new McPkgEntry struct.
- * @return A pointer to the newly created struct, or NULL on failure.
- */
-McPkgEntry *mcpkg_entry_new();
-
-/**
- * @brief Frees all memory associated with an McPkgEntry struct.
- * @param entry The entry to free.
- */
+/** Frees all memory associated with an McPkgEntry struct. */
 void mcpkg_entry_free(McPkgEntry *entry);
 
-/**
- * @brief Packs an McPkgEntry struct into a msgpack_sbuffer.
- * @param entry The struct to pack.
- * @param sbuf The msgpack buffer to write to.
- * @return 0 on success, non-zero on failure.
- */
+/** Packs an McPkgEntry into a msgpack buffer as a single map. Returns 0 on success. */
 int mcpkg_entry_pack(const McPkgEntry *entry, msgpack_sbuffer *sbuf);
 
-/**
- * @brief Unpacks a msgpack object into an McPkgEntry struct.
- * @param entry_obj The msgpack object.
- * @param entry The struct to populate.
- * @return 0 on success, non-zero on failure.
- */
+/** Unpacks a msgpack object map into an McPkgEntry. Returns 0 on success. */
 int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry);
 
-/**
- * @brief Converts an McPkgEntry struct into a debug string.
- * @param entry The entry to convert.
- * @return A dynamically allocated string, or NULL on failure.
- */
+/** Converts an McPkgEntry to a debug string (caller frees). */
 char *mcpkg_entry_to_string(const McPkgEntry *entry);
 
-#endif // MCPKG_ENTRY_H
+#endif /* MCPKG_ENTRY_H */

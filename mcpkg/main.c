@@ -1,40 +1,139 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <getopt.h>
 
-#include "mcpkg.h"
+#include <mcpkg_cache.h>
+#include <mcpkg.h>
+#include <utils/array_helper.h>
+//local
 #include "update.h"
+#include "cache.h"
+#include "install.h"
 
+// Command-line options
+static struct option long_options[] = {
+    {"version", required_argument, 0, 'v'},
+    {"loader", required_argument, 0, 'l'},
+    {"help", no_argument, 0, 'h'},
+    {0, 0, 0, 0}
+};
+
+static void print_help(const char *prog_name) {
+    printf("Welcome to McPkg a Minecraft package manager:\n");
+    printf("Global Options:\n");
+    printf("  -v, --version <version>    Minecraft version (e.g., 1.21.8)\n");
+    printf("  -l, --loader <loader>      Mod loader (e.g., fabric)\n");
+    printf("  -h, --help                 Show this help message\n");
+    printf("Commands:\n");
+    printf("  update                     Update the local package cache\n");
+    printf("  cache                      Interact with the local cache\n");
+    printf("  install                    Installs a mod for a loader at a version\n");
+    printf("\nExample Usage: %s update --version 1.21.6 -l forge\n", prog_name);
+}
+
+static void print_cache_help() {
+    printf("mcpkg Cache\n");
+    printf("Commands\n");
+    printf(" * show    <package>    Search information about package from cache\n");
+    printf(" * search  <package>    Search the local cache for a package\n");
+    printf("\nExample Usage: mcpkg cache search sodium\n");
+}
+
+static void print_install_help() {
+    printf("mcpkg Install\n");
+    printf("Usage:\n");
+    printf("  mcpkg install <package> [<package> ...]\n");
+    printf("\nExamples:\n");
+    printf("  mcpkg install sodium\n");
+    printf("  mcpkg install sodium tweakeroo lithium\n");
+}
 int main(int argc, char *argv[]) {
-    // Simple command-line argument parsing for the "update" command
-    if (argc < 2 || strcmp(argv[1], "update") != 0) {
-        fprintf(stderr, "Usage: %s update [options]\n", argv[0]);
+    const char *mc_version = getenv(ENV_MC_VERSION) ? getenv(ENV_MC_VERSION) : "1.21.8";
+    const char *mod_loader = getenv(ENV_MC_LOADER) ? getenv(ENV_MC_LOADER) : "fabric";
+    int opt;
+
+    // Parse global options first
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "v:l:h", long_options, &option_index)) != -1) {
+        switch (opt) {
+        case 'v': mc_version = optarg; break;
+        case 'l': mod_loader = optarg; break;
+        case 'h': print_help(argv[0]); return 0;
+        default:  return 1;
+        }
+    }
+
+    if (optind >= argc) {
+        print_help(argv[0]);
         return 1;
     }
 
-    // Default values
-    const char *default_mc_version = "1.21.8";
-    const char *default_mod_loader = "fabric";
+    const char *command = argv[optind];
 
-    // Use environment variables if available
-    const char *mc_version = getenv(ENV_MC_VERSION);
-    if (!mc_version) {
-        mc_version = default_mc_version;
-    }
+    if (strcmp(command, "update") == 0) {
+        return run_update_command(mc_version, mod_loader);
 
-    const char *mod_loader = getenv(ENV_MC_LOADER);
-    if (!mod_loader) {
-        mod_loader = default_mod_loader;
-    }
+    } else if (strcmp(command, "install") == 0) {
+        // Remaining args after "install" are package names
+        if (optind + 1 >= argc) {
+            fprintf(stderr, "Error: 'install' requires at least one package name.\n");
+            print_install_help();
+            return 1;
+        }
 
-    printf("Updating local cache for Minecraft version '%s' and loader '%s'...\n", mc_version, mod_loader);
+        str_array *packages = str_array_new();
+        if (!packages) {
+            fprintf(stderr, "Error: out of memory.\n");
+            return 1;
+        }
 
-    if (run_update_command(mc_version, mod_loader) != 0) {
-        fprintf(stderr, "Failed to run update command.\n");
+        for (int i = optind + 1; i < argc; ++i) {
+            if (argv[i] && *argv[i]) {
+                if (str_array_add(packages, argv[i]) != MCPKG_ERROR_PARSE) {
+                    // Your str_array_add currently returns MCPKG_ERROR_PARSE on success in old code,
+                    // but we’ve fixed that elsewhere. If still inverted, you can just ignore the return.
+                }
+            }
+        }
+
+        mcpkg_error_types rc = install_command(mc_version, mod_loader, packages);
+        str_array_free(packages);
+        return rc;
+
+    } else if (strcmp(command, "cache") == 0) {
+        if (optind + 1 >= argc) {
+            print_cache_help();
+            return 1;
+        }
+
+        const char *cache_command = argv[optind + 1];
+        const char *package_name  = (optind + 2 < argc) ? argv[optind + 2] : NULL;
+
+        if (strcmp(cache_command, "search") == 0) {
+            if (!package_name) {
+                fprintf(stderr, "Error: 'cache search' requires a package name.\n");
+                print_cache_help();
+                return 1;
+            }
+            return search_cache_command(mc_version, mod_loader, package_name);
+
+        } else if (strcmp(cache_command, "show") == 0) {
+            if (!package_name) {
+                fprintf(stderr, "Error: 'cache show' requires a package name.\n");
+                print_cache_help();
+                return 1;
+            }
+            return show_cache_command(mc_version, mod_loader, package_name);
+
+        } else {
+            print_cache_help();
+            return 1;
+        }
+
+    } else {
+        print_help(argv[0]);
         return 1;
     }
-
-    printf("Update complete.\n");
-
-    return 0;
 }

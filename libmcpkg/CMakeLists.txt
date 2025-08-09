@@ -5,8 +5,10 @@ project(${TARGET_NAME}
     LANGUAGES C)
 
 set(SOURCES
-    code_names.c
+    mcpkg_cache.c
+    utils/code_names.c
     utils/array_helper.c
+    utils/mcpkg_fs.c
     api/mcpkg_info_entry.c
     api/mcpkg_deps_entry.c
     api/mcpkg_entry.c
@@ -16,7 +18,9 @@ set(SOURCES
 
 set(HEADERS
     mcpkg.h
-    code_names.h
+    mcpkg_cache.h
+    utils/mcpkg_fs.h
+    utils/code_names.h
     utils/array_helper.h
     api/mcpkg_info_entry.h
     api/mcpkg_deps_entry.h

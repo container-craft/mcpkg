@@ -1,24 +1,27 @@
 #ifndef MCPKG_H
 #define MCPKG_H
 
-// Later we will make the full include.
-// #include "mcpkg_api_client.h" // Includes the API client logic
-// #include "mcpkg_api.h"        // Includes the plugin API interface
-// #include "code_names.h"         // Includes the version/codename mapping logic
-
-// --- Global Constants and Defines ---
+#include <msgpack.h>
 
 #define MCPKG_VERSION "0.1"
-#define MCPKG_USER_AGENT "m_jimmer/mcpkg/0.1.0"
+
+#ifndef MCPKG_USER_AGENT
+#define MCPKG_USER_AGENT "m_jimmer/mcpkg/" MCPKG_VERSION
+#endif
+
+#ifndef MODRINTH_API_SEARCH_URL_BASE
+#define MODRINTH_API_SEARCH_URL_BASE "https://api.modrinth.com/v2/search"
+#endif
+
+#ifndef MCPKG_CACHE
+#define MCPKG_CACHE         "/var/cache/mcpkg/"
+#endif
 
 // --- Environment Variable Keys ---
 
 #define ENV_MC_VERSION          "MC_VERSION"
 #define ENV_MC_LOADER           "MC_LOADER"
-#define ENV_MC_WORK_DIR         "MC_WORK_DIR"
-#define ENV_MC_BUILD_DIR        "MC_BUILD_DIR"
-#define ENV_MC_CACHE_DIR        "MC_CACHE_DIR"
-#define ENV_MC_REPO_DIR         "MC_REPO_DIR"
+#define ENV_MCPKG_CACHE         "MCPKG_CACHE"
 
 // --- Mod Loader Definitions ---
 
@@ -40,7 +43,20 @@ typedef enum {
     PROVIDER_LOCAL
 } provider_type;
 
-// --- Function Prototypes for main logic later ---
+// --- Error Types ---
+
+typedef enum {
+    MCPKG_ERROR_SUCCESS,
+    MCPKG_ERROR_GENERAL,
+    MCPKG_ERROR_NOT_FOUND,
+    MCPKG_ERROR_NETWORK,
+    MCPKG_ERROR_PARSE,
+    MCPKG_ERROR_FS,
+    MCPKG_ERROR_VERSION_MISMATCH,
+    MCPKG_ERROR_OOM
+} mcpkg_error_types;
+
+// --- Main Function Prototypes ---
 
 /**
  * @brief Initializes the mcpkg environment and configuration.

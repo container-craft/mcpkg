@@ -1,42 +1,100 @@
-#ifndef MODRITH_API_H
-#define MODRITH_API_H
+#ifndef MCPKG_API_MODRITH_CLIENT_H
+#define MCPKG_API_MODRITH_CLIENT_H
 
-#include <cjson/cJSON.h>
-#include <stdbool.h>
 #include <stddef.h>
+#include <curl/curl.h>
+#include <cjson/cJSON.h>
 
-#include "utils/array_helper.h"
 #include "api/mcpkg_api_client.h"
+#include "mcpkg_entry.h"
 
-// Forward declaration
-typedef struct ModrithApiClient ModrithApiClient;
-
-struct ModrithApiClient {
-    ApiClient *client;
-    char *mc_version;
-    char *mod_loader;
-    const char *user_agent;
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
- * @brief Allocates and initializes a new ModrithApiClient struct.
- * @param mc_version The Minecraft version to use by default.
- * @param mod_loader The mod loader to use by default.
- * @return A pointer to the newly created struct, or NULL on failure.
+ * Structure representing a Modrinth API client instance.
+ */
+typedef struct {
+    ApiClient *client;        /**< Underlying API HTTP client */
+    char *mc_version;         /**< Default Minecraft version */
+    char *mod_loader;         /**< Default mod loader */
+    const char *user_agent;   /**< User-Agent string for requests */
+} ModrithApiClient;
+
+/**
+ * Create a new Modrinth API client.
+ *
+ * @param mc_version Default Minecraft version string.
+ * @param mod_loader Default loader (e.g., "fabric", "forge").
+ * @return Pointer to newly allocated ModrithApiClient, or NULL on error.
  */
 ModrithApiClient *modrith_client_new(const char *mc_version, const char *mod_loader);
 
 /**
- * @brief Frees all memory associated with a ModrithApiClient struct.
- * @param client The client to free.
+ * Free a Modrinth API client.
  */
-void modrith_client_free(ModrithApiClient *client);
+void modrith_client_free(ModrithApiClient *client_data);
 
 /**
- * @brief Fetches all available mods from Modrinth for the configured version and loader.
- * @param client The Modrinth API client.
- * @return An array of McPkgInfoEntry structs on success, or NULL on failure.
+ * Update local cache (Packages.info + Packages.info.zstd) for given MC version and loader.
+ *
+ * @param client_data Modrinth API client.
+ * @return MCPKG_ERROR_* code.
  */
-str_array *modrith_client_update(ModrithApiClient *client);
+int modrith_client_update(ModrithApiClient *client_data);
 
-#endif // MODRITH_API_H
+/**
+ * Install the latest compatible version of a mod by project ID or slug.
+ *
+ * @param client Modrinth API client.
+ * @param id_or_slug Project ID or slug.
+ * @return MCPKG_ERROR_* code.
+ */
+int modrith_client_install(ModrithApiClient *client, const char *id_or_slug);
+
+/**
+ * Download a file via HTTP to a destination path, optionally verifying sha512.
+ *
+ * @param api ApiClient pointer.
+ * @param url URL to download.
+ * @param sha_hex_or_null Expected SHA512 hex (optional).
+ * @param dest_path Destination file path.
+ * @return MCPKG_ERROR_* code.
+ */
+int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_or_null, const char *dest_path);
+
+/**
+ * Fetch versions JSON array for a given project ID or slug filtered by loader and MC version.
+ *
+ * Caller must free the returned cJSON* with cJSON_Delete().
+ *
+ * @param client Modrinth API client.
+ * @param id_or_slug Project ID or slug.
+ * @return cJSON array or NULL on error.
+ */
+cJSON *modrith_get_versions_json(ModrithApiClient *client, const char *id_or_slug);
+
+/**
+ * Choose the best/latest version from a Modrinth versions array.
+ *
+ * @param client Modrinth API client (unused currently).
+ * @param versions_array cJSON array from modrith_get_versions_json().
+ * @return cJSON object representing the best version, or NULL if none.
+ */
+cJSON *modrith_pick_best_version(ModrithApiClient *client, cJSON *versions_array);
+
+/**
+ * Convert a Modrinth version JSON object to a McPkgEntry.
+ *
+ * @param v cJSON version object.
+ * @param out Output pointer for allocated McPkgEntry.
+ * @return 0 on success, non-zero on error.
+ */
+int modrith_version_to_entry(cJSON *v, McPkgEntry **out);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* MCPKG_API_MODRITH_CLIENT_H */

@@ -7,10 +7,14 @@ project(${TARGET_NAME}
 set(SOURCES
     main.c
     update.c
+    cache.c
+    install.c
 )
 
 set(HEADERS
     update.h
+    cache.h
+    install.h
 )
 
 add_executable(${TARGET_NAME}

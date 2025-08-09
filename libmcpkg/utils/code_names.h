@@ -31,6 +31,13 @@ const char *codename_for_version(const char *mc_version);
  */
 const mc_versions_by_codename *versions_for_codename(const char *code_name);
 
+// /**
+//  * @brief compare's two different versions
+//  * @param v1 version one
+//  * @param v2 version two
+//  * @return Returns MCPKG_ERROR_SUCCESS if true else MCPKG_ERROR_VERSION_MISMATCH
+//  */
+// int compare_versions(const char *v1, const char *v2)
 /**
  * @brief Returns the latest version for a given codename.
  * @param code_name The codename string.

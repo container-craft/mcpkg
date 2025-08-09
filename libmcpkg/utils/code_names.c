@@ -102,19 +102,20 @@ const mc_versions_by_codename *versions_for_codename(const char *code_name) {
     return NULL;
 }
 
-int compare_versions(const char *v1, const char *v2) {
-    int i1, i2, j1 = 0, j2 = 0, k1 = 0, k2 = 0;
+// int compare_versions(const char *v1, const char *v2) {
+//     int i1, i2, j1 = 0, j2 = 0, k1 = 0, k2 = 0;
+//     // Parse version strings into parts
+//     int count1 = sscanf(v1, "%d.%d.%d", &i1, &j1, &k1);
+//     int count2 = sscanf(v2, "%d.%d.%d", &i2, &j2, &k2);
+//     if (i1 != i2)
+//         return i1 - i2;
+//     if (count1 > 1 && count2 > 1 && j1 != j2)
+//         return j1 - j2;
+//     if (count1 > 2 && count2 > 2 && k1 != k2)
+//         return k1 - k2;
 
-    // Parse version strings into parts
-    int count1 = sscanf(v1, "%d.%d.%d", &i1, &j1, &k1);
-    int count2 = sscanf(v2, "%d.%d.%d", &i2, &j2, &k2);
-
-    if (i1 != i2) return i1 - i2;
-    if (count1 > 1 && count2 > 1 && j1 != j2) return j1 - j2;
-    if (count1 > 2 && count2 > 2 && k1 != k2) return k1 - k2;
-
-    return 0;
-}
+//     return 0;
+// }
 
 const char *latest_version_for_codename(const char *code_name) {
     const mc_versions_by_codename *versions_struct = versions_for_codename(code_name);
