@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+#include "utils/compat.h"
 static inline char *strndup_safe(const char *s, size_t n) {
     if (!s || n == 0) return NULL;
     char *out = malloc(n + 1);

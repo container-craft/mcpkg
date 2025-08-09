@@ -9,7 +9,8 @@
 
 #include "utils/array_helper.h"
 #include "api/mcpkg_deps_entry.h"
-
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 typedef struct McPkgEntry {
     char *id;
     char *name;
@@ -47,4 +48,5 @@ static void mcpkg_sleep_ms(long milliseconds) {
     ts.tv_nsec = (milliseconds % 1000) * 1000000;
     nanosleep(&ts, &ts);
 }
+MCPKG_END_DECLS
 #endif /* MCPKG_ENTRY_H */

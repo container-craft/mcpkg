@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 #include <msgpack.h>
-#include "../utils/array_helper.h"
-
-// Main struct for mod/project metadata
+#include "utils/array_helper.h"
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 typedef struct McPkgInfoEntry {
     char *id;
     char *name;
@@ -49,5 +49,5 @@ int mcpkg_info_entry_unpack(msgpack_object *obj, McPkgInfoEntry *entry);
  * Convert to human-readable string (caller frees).
  */
 char *mcpkg_info_entry_to_string(const McPkgInfoEntry *entry);
-
+MCPKG_END_DECLS
 #endif /* MCPKG_INFO_ENTRY_H */

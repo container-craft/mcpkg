@@ -8,10 +8,8 @@
 #include "api/mcpkg_api_client.h"
 #include "mcpkg_entry.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 /**
  * Structure representing a Modrinth API client instance.
  */
@@ -82,9 +80,5 @@ cJSON *modrith_pick_best_version(ModrithApiClient *client, cJSON *versions_array
  * @return 0 on success, non-zero on error.
  */
 int modrith_version_to_entry(cJSON *v, McPkgEntry **out);
-
-#ifdef __cplusplus
-}
-#endif
-
+MCPKG_END_DECLS
 #endif /* MCPKG_API_MODRITH_CLIENT_H */

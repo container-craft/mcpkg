@@ -10,7 +10,6 @@ set(SOURCES
     cache.c
     get.c
     config.c
-    activate.c
 )
 
 set(HEADERS
@@ -18,7 +17,6 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/cache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get.h
     ${CMAKE_CURRENT_SOURCE_DIR}/config.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/activate.h
 )
 
 add_executable(${TARGET_NAME} ${HEADERS} ${SOURCES})

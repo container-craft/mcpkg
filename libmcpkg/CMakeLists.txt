@@ -5,6 +5,7 @@ project(${TARGET_NAME}
     LANGUAGES C)
 
 set(SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_activate.c
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_cache.c
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_get.c
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/code_names.c
@@ -18,6 +19,9 @@ set(SOURCES
 )
 
 set(HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_activate.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/compat.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/mcpkg_export.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_cache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_get.h

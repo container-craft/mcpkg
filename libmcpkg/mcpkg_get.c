@@ -6,9 +6,6 @@
 #include "api/modrith_client.h"
 #include "utils/code_names.h"
 
-
-
-
 // Simple download (sha verification TODO)
 int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_or_null, const char *dest_path) {
     (void)sha_hex_or_null; // TODO: implement sha512 verify

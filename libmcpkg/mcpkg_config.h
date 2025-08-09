@@ -7,15 +7,15 @@
 #include <stdarg.h>
 
 #include "mcpkg.h"
-#include "utils/mcpkg_fs.h"   // mkdir_p
+#include "utils/mcpkg_fs.h"
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 
 typedef struct {
     char *mc_base;
     char *mc_version;
     char *mc_loader;
 } McpkgConfig;
-
-/* --- helpers ------------------------------------------------------------ */
 
 static void cfg_free(McpkgConfig *cfg) {
     if (!cfg) return;
@@ -189,4 +189,5 @@ static inline mcpkg_error_types mcpkg_init(void)
     return MCPKG_ERROR_SUCCESS;
 }
 
-#endif /* MCPKG_CONFIG_H */
+MCPKG_END_DECLS
+#endif // MCPKG_CONFIG_H

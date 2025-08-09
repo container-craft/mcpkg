@@ -1,0 +1,13 @@
+plugins { id 'java' }
+
+group = 'com.mcpkg'
+version = '0.1.0'
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+
+tasks.register('buildJni') {
+    doLast {
+        exec { commandLine 'cmake', '-S', 'src/main/native', '-B', 'build-jni' }
+        exec { commandLine 'cmake', '--build', 'build-jni', '--config', 'Release', '-j' }
+    }
+}
+tasks.build.dependsOn tasks.buildJni

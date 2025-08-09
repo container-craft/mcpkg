@@ -2,6 +2,8 @@
 #define MCPKG_H
 
 #include <msgpack.h>
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 
 #define MCPKG_VERSION "0.1"
 
@@ -51,4 +53,7 @@ typedef enum {
     MCPKG_ERROR_OOM
 } mcpkg_error_types;
 
+
+
+MCPKG_END_DECLS
 #endif // MCPKG_H

@@ -17,7 +17,6 @@ This makes it easy to manage and swap mod sets without cluttering your .minecraf
 
 mcpkg is designed to be deterministic, reproducible, and script-friendly, so you can integrate it into CI/CD pipelines or automated modpack builders. This is what the project was made for. also checkout [container_craft the other end of this project](https://github.com/container-craft/container_craft).
 
-
 [Join Discord](https://discord.gg/bWWfbW3dBa)
 
 ####  Environment (optional)
@@ -25,6 +24,7 @@ mcpkg is designed to be deterministic, reproducible, and script-friendly, so you
 You can override defaults via env vars:
 
 ```shell
+export MC_BASE=/home/someuser/.minecraft
 export MC_VERSION=1.21.8
 export MC_LOADER=fabric
 export MCPKG_CACHE=/var/cache/mcpkg
@@ -43,8 +43,8 @@ mcpkg cache show sodium
 
 #### install / remove
 ```shell
-./mcpkg install sodium
-./mcpkg remove sodium
+mcpkg install sodium
+mcpkg remove sodium
 ```
 
 #### set globals (persisted)
@@ -61,17 +61,59 @@ mcpkg activate -v "$MC_VERSION" -l "$MC_LOADER"
 ```
 
 
-## Building
+## Build dependencies
 
-## build time dependencies
-```shell
-sudo apt-get install git build-essential cmake pkg-config libzstd-dev libcjson-dev libcurl4-openssl-dev libmsgpack-c-dev
+I have only tested this on Debian Sid.
+
+**Debian Based**
+ ```shell
+sudo apt-get -y install git build-essential cmake pkg-config \
+  libzstd-dev libcjson-dev libcurl4-openssl-dev libmsgpack-c-dev
 ```
 
-#### build it
+**Fedora**
+
+```
+sudo dnf install -y \
+  gcc gcc-c++ cmake pkgconfig \
+  zstd-devel cjson-devel libcurl-devel msgpack-devel
+```
+ 
+
+**Arch**
+```shell
+sudo pacman -S --needed \
+  base-devel cmake pkgconf \
+  zstd cjson curl msgpack-c
+```
+
+**OSX Homebrew**
+```shell
+brew install cmake zstd cjson curl msgpack avahi
+```
+
+**Windows**
+The best I can do for you is provide links to the software that is needed. Do your research
+* [zstd](https://facebook.github.io/zstd/)
+* [libcurl](https://curl.se/windows/)
+* [libcjson](https://github.com/DaveGamble/cJSON/blob/master/README.md)
+* [libmsgpack-c](https://msgpack.org/)
+
+
+## Building
 ```shell
 git clone https://github.com/container-craft/mcpkg.git
 mkdir build
 cd build 
-cmake --build ../ --target all -j $(nproc)
-``
+cmake --build ../ --target all -j$(nproc)
+```
+
+
+## Installing
+``` 
+cmake --build ../ --target install
+```
+
+
+
+

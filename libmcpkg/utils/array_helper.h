@@ -5,7 +5,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <msgpack/pack.h>
-
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 typedef struct {
     char  **elements;
     size_t  count;
@@ -41,5 +42,5 @@ static str_array *cjson_to_str_array(cJSON *json_array) {
     }
     return arr;
 }
-
+MCPKG_END_DECLS
 #endif /* MCPKG_ARRAY_HELPER_H */

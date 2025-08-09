@@ -3,7 +3,10 @@
 
 #include <stddef.h>
 #include "mcpkg.h"
+#include "mcpkg_export.h"
+#include "utils/compat.h"
 
+MCPKG_BEGIN_DECLS
 /**
  * Recursively creates directories (like `mkdir -p`).
  * Returns MCPKG_ERROR_SUCCESS on success, MCPKG_ERROR_FS on failure.
@@ -31,11 +34,13 @@ mcpkg_error_types mcpkg_read_cache_file(const char *path, char **buffer, size_t 
 
 // mods dir and install DB paths
 static int mods_dir_path(char **out_path, const char *root, const char *loader, const char *codename, const char *version) {
-    if (asprintf(out_path, "%s/%s/%s/%s/mods", root, loader, codename, version) < 0) return 1;
+    if (asprintf(out_path, "%s/%s/%s/%s/mods", root, loader, codename, version) < 0)
+        return 1;
     return 0;
 }
 static int install_db_path(char **out_path, const char *root, const char *loader, const char *codename, const char *version) {
-    if (asprintf(out_path, "%s/%s/%s/%s/mods/Packages.install", root, loader, codename, version) < 0) return 1;
+    if (asprintf(out_path, "%s/%s/%s/%s/mods/Packages.install", root, loader, codename, version) < 0)
+        return 1;
     return 0;
 }
 
@@ -50,4 +55,5 @@ mcpkg_error_types mcpkg_remove_tree(const char *path);
 
 mcpkg_error_types mcpkg_unlink_any(const char *path);
 
+MCPKG_END_DECLS
 #endif // MCPKG_FS_H

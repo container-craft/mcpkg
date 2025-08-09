@@ -19,6 +19,9 @@
 #include "modrith_client.h"
 #include "utils/mcpkg_fs.h"
 
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
+
 typedef struct McPkgGet McPkgGet;
 typedef struct McPkgGet {
     char *base_path;
@@ -296,6 +299,5 @@ int mcpkg_get_remove(const char *mc_version, const char *mod_loader, str_array *
 // check what is installed vs what is upstream; upgrade if new versions and upgrade deps as well (if needed)
 int mcpkg_get_upgreade(const char *mc_version, const char *mod_loader);
 
-
-
+MCPKG_END_DECLS
 #endif /* MCPKG_GET_H */

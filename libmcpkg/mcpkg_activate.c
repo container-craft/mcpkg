@@ -1,4 +1,4 @@
-#include "activate.h"
+#include "mcpkg_activate.h"
 #include "utils/mcpkg_fs.h"
 #include "utils/code_names.h"
 #include "mcpkg_config.h"  // to read mc_base (persisted)

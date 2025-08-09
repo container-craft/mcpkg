@@ -7,12 +7,12 @@
 #include <mcpkg_cache.h>
 #include <mcpkg.h>
 #include <utils/array_helper.h>
+#include "mcpkg_activate.h"
 //local
 #include "config.h"
 #include "update.h"
 #include "cache.h"
 #include "get.h"
-#include "activate.h"
 
 // Command-line options
 static struct option long_options[] = {

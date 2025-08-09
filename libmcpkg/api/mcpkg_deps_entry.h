@@ -5,7 +5,8 @@
 #include <msgpack.h>
 #include <stdbool.h>
 #include "utils/array_helper.h"
-
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 typedef struct McPkgDeps {
     char *id;              // project_id
     char *name;            // (keep if you want a display name)
@@ -31,5 +32,5 @@ int mcpkg_deps_unpack(msgpack_object *deps_obj, McPkgDeps *deps);
 
 /** Pretty print (caller frees) */
 char *mcpkg_deps_to_string(const McPkgDeps *deps);
-
+MCPKG_END_DECLS
 #endif /* MCPKG_DEPS_ENTRY_H */

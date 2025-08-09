@@ -186,13 +186,16 @@ int mcpkg_cache_load(McPkgCache *cache, const char *mod_loader, const char *vers
     }
 
     /* Build full paths */
-    if (asprintf(&compressed_path,   "%s/Packages.info.zstd", cache->base_path) < 0 || !compressed_path) goto done;
-    if (asprintf(&uncompressed_path, "%s/Packages.info",      cache->base_path) < 0 || !uncompressed_path) goto done;
+    if (asprintf(&compressed_path,   "%s/Packages.info.zstd", cache->base_path) < 0 || !compressed_path)
+        goto done;
+    if (asprintf(&uncompressed_path, "%s/Packages.info",      cache->base_path) < 0 || !uncompressed_path)
+        goto done;
 
     if (access(compressed_path, F_OK) == 0) {
         /* Read compressed */
         rc = mcpkg_cache_read_file(compressed_path, &data, &size);
-        if (rc != MCPKG_ERROR_SUCCESS) goto done;
+        if (rc != MCPKG_ERROR_SUCCESS)
+            goto done;
 
         /* Decompress */
         {
@@ -207,18 +210,21 @@ int mcpkg_cache_load(McPkgCache *cache, const char *mod_loader, const char *vers
             /* Unpack */
             rc = unpack_all_mods_from_buffer(cache, decompressed, dsz);
             free(decompressed);
-            if (rc != MCPKG_ERROR_SUCCESS) goto done;
+            if (rc != MCPKG_ERROR_SUCCESS)
+                goto done;
         }
 
     } else if (access(uncompressed_path, F_OK) == 0) {
         /* Read plain */
         rc = mcpkg_cache_read_file(uncompressed_path, &data, &size);
-        if (rc != MCPKG_ERROR_SUCCESS) goto done;
+        if (rc != MCPKG_ERROR_SUCCESS)
+            goto done;
 
         /* Unpack */
         rc = unpack_all_mods_from_buffer(cache, data, size);
         free(data); data = NULL;
-        if (rc != MCPKG_ERROR_SUCCESS) goto done;
+        if (rc != MCPKG_ERROR_SUCCESS)
+            goto done;
 
     } else {
         rc = MCPKG_ERROR_NOT_FOUND;
@@ -245,8 +251,8 @@ McPkgInfoEntry **mcpkg_cache_search(McPkgCache *cache, const char *package, size
     for (size_t i = 0; i < cache->mods_count; ++i) {
         McPkgInfoEntry *e = cache->mods[i];
         if (!e) continue;
-        if ((e->name   && strcasestr(e->name, package)) ||
-            (e->title  && strcasestr(e->title, package))) {
+        if ((e->name   && strstr(e->name, package)) ||
+            (e->title  && strstr(e->title, package))) {
             void *tmp = realloc(matches, (cnt + 1) * sizeof(*matches));
             if (!tmp) {
                 free(matches);

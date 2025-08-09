@@ -4,7 +4,8 @@
 #include <curl/curl.h>
 #include <cjson/cJSON.h>
 #include <stddef.h>
-
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 /* Single API response body (owned by caller after call returns) */
 typedef struct {
     char  *data;
@@ -46,4 +47,5 @@ CURLcode api_client_get_raw(ApiClient *client, const char *url,
    Retries on 429/5xx with exponential backoff, honoring Retry-After when present. */
 cJSON *api_client_get(ApiClient *client, const char *url, struct curl_slist *headers);
 
+MCPKG_END_DECLS
 #endif /* MCPKG_API_CLIENT_H */

@@ -7,9 +7,10 @@
 
 #include "mcpkg_info_entry.h"
 
-/* Forward declaration */
-typedef struct McPkgCache McPkgCache;
+#include "mcpkg_export.h"
+MCPKG_BEGIN_DECLS
 
+typedef struct McPkgCache McPkgCache;
 typedef struct McPkgCache {
     char *base_path;
     McPkgInfoEntry **mods;
@@ -42,4 +43,5 @@ McPkgInfoEntry **mcpkg_cache_search(McPkgCache *cache, const char *package, size
  */
 char *mcpkg_cache_show(McPkgCache *cache, const char *package);
 
-#endif /* MCPKG_CACHE_H */
+MCPKG_END_DECLS
+#endif // MCPKG_CACHE_H

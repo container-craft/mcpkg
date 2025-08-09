@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-
+#include "utils/compat.h"
 static int equal_key(msgpack_object k, const char *lit) {
     size_t n = strlen(lit);
     return (k.type == MSGPACK_OBJECT_STR &&
