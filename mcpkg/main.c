@@ -92,8 +92,7 @@ int main(int argc, char *argv[]) {
         for (int i = optind + 1; i < argc; ++i) {
             if (argv[i] && *argv[i]) {
                 if (str_array_add(packages, argv[i]) != MCPKG_ERROR_PARSE) {
-                    // Your str_array_add currently returns MCPKG_ERROR_PARSE on success in old code,
-                    // but we’ve fixed that elsewhere. If still inverted, you can just ignore the return.
+                    ////
                 }
             }
         }

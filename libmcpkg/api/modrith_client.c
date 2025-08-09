@@ -440,23 +440,33 @@ static int install_single_entry(ModrithApiClient *client,
     if (!entry || !entry->file_name || !entry->url || !entry->id || !entry->version)
         return MCPKG_ERROR_PARSE;
 
-    /* Skip if already installed same version */
+    /* If already installed at the exact version, optionally refresh DB and return */
     if (install_db_is_installed_exact(install_db, entry->id, entry->version)) {
-        // Still upsert (keeps entry fresh)
-        if (install_db_upsert_entry(install_db, entry) != 0) return MCPKG_ERROR_FS;
+        /* Optional: keep DB fresh; NOTE: upsert takes ownership, so don't touch entry after this */
+        (void)install_db_upsert_entry(install_db, entry);
         return MCPKG_ERROR_SUCCESS;
     }
 
-    /* Upsert before download so we have a plan recorded */
-    if (install_db_upsert_entry(install_db, entry) != 0) return MCPKG_ERROR_FS;
-
-    /* Download JAR */
+    /* Download JAR first (we still own entry here) */
     char *dest = NULL;
-    if (asprintf(&dest, "%s/%s", mods_dir, entry->file_name) < 0) return MCPKG_ERROR_OOM;
+    if (asprintf(&dest, "%s/%s", mods_dir, entry->file_name) < 0)
+        return MCPKG_ERROR_OOM;
 
     int rc = http_download_to_file(client->client, entry->url, entry->sha, dest);
     free(dest);
-    return rc;
+    if (rc != MCPKG_ERROR_SUCCESS) {
+        return rc;
+    }
+
+    /* Now record it in Packages.install; upsert TAKES OWNERSHIP of entry. */
+    rc = install_db_upsert_entry(install_db, entry);
+    /* On success: do not use or free 'entry' anymore (ownership transferred) */
+    if (rc != 0) {
+        /* If you want to be tidy, you could unlink the downloaded file on failure. */
+        return MCPKG_ERROR_FS;
+    }
+
+    return MCPKG_ERROR_SUCCESS;
 }
 
 static int dep_is_required(const char *type) {
@@ -713,10 +723,12 @@ int modrith_version_to_entry(cJSON *v, McPkgEntry **out) {
 // Simple download (sha verification TODO)
 int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_or_null, const char *dest_path) {
     (void)sha_hex_or_null; // TODO: implement sha512 verify
-    if (!api || !api->curl || !url || !dest_path) return MCPKG_ERROR_GENERAL;
+    if (!api || !api->curl || !url || !dest_path)
+        return MCPKG_ERROR_GENERAL;
 
     FILE *fp = fopen(dest_path, "wb");
-    if (!fp) return MCPKG_ERROR_FS;
+    if (!fp)
+        return MCPKG_ERROR_FS;
 
     curl_easy_setopt(api->curl, CURLOPT_URL, url);
     curl_easy_setopt(api->curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -737,98 +749,60 @@ int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_o
 // --- High-level install ---
 
 int modrith_client_install(ModrithApiClient *client, const char *id_or_slug) {
-    if (!client || !id_or_slug) return MCPKG_ERROR_PARSE;
+    if (!client || !id_or_slug)
+        return MCPKG_ERROR_PARSE;
 
-    const char *cache_root = getenv(ENV_MCPKG_CACHE); if (!cache_root) cache_root = MCPKG_CACHE;
-    const char *loader     = getenv(ENV_MC_LOADER);    if (!loader)     loader     = client->mod_loader;
-    const char *mcver      = getenv(ENV_MC_VERSION);   if (!mcver)      mcver      = client->mc_version;
+    const char *cache_root = getenv(ENV_MCPKG_CACHE);
+    if (!cache_root) cache_root = MCPKG_CACHE;
+
+    const char *loader = getenv(ENV_MC_LOADER);
+    if (!loader) loader = client->mod_loader;
+
+    const char *mcver = getenv(ENV_MC_VERSION);
+    if (!mcver) mcver = client->mc_version;
 
     const char *codename = codename_for_version(mcver);
-    if (!codename) return MCPKG_ERROR_VERSION_MISMATCH;
+    if (!codename)
+        return MCPKG_ERROR_VERSION_MISMATCH;
 
-    // ensure mods dir
+    // Ensure mods dir exists
     char *mods_dir = NULL;
-    if (mods_dir_path(&mods_dir, cache_root, loader, codename, mcver) != 0) return MCPKG_ERROR_OOM;
-    if (ensure_dir(mods_dir) != 0) { free(mods_dir); return MCPKG_ERROR_FS; }
-
-    // install DB path
-    char *install_db = NULL;
-    if (install_db_path(&install_db, cache_root, loader, codename, mcver) != 0) { free(mods_dir); return MCPKG_ERROR_OOM; }
-
-    // Make sure search cache exists (optional but matches your plan)
-    McPkgCache *cache = mcpkg_cache_new();
-    if (!cache) { free(mods_dir); free(install_db); return MCPKG_ERROR_OOM; }
-    int rc = mcpkg_cache_load(cache, loader, mcver);
-    if (rc != MCPKG_ERROR_SUCCESS) {
-        fprintf(stderr, "Cache not available for %s/%s\n", loader, mcver);
-        mcpkg_cache_free(cache); free(mods_dir); free(install_db);
-        return rc;
-    }
-
-    // Fetch versions for this project filtered by loader + MC version
-    cJSON *versions = modrith_get_versions_json(client, id_or_slug);
-    if (!versions) {
-        mcpkg_cache_free(cache); free(mods_dir); free(install_db);
-        return MCPKG_ERROR_NETWORK;
-    }
-
-    // Choose the best/latest version
-    cJSON *best = modrith_pick_best_version(client, versions);
-    if (!best) {
-        cJSON_Delete(versions); mcpkg_cache_free(cache); free(mods_dir); free(install_db);
-        return MCPKG_ERROR_NOT_FOUND;
-    }
-
-    // Convert to McPkgEntry
-    McPkgEntry *entry = NULL;
-    if (modrith_version_to_entry(best, &entry) != 0 || !entry) {
-        cJSON_Delete(versions); mcpkg_cache_free(cache); free(mods_dir); free(install_db);
-        return MCPKG_ERROR_PARSE;
-    }
-
-    // Update install DB (upsert); takes ownership on success
-    rc = install_db_upsert_entry(install_db, entry);
-    if (rc != 0) {
-        mcpkg_entry_free(entry);
-        cJSON_Delete(versions); mcpkg_cache_free(cache); free(mods_dir); free(install_db);
+    if (mods_dir_path(&mods_dir, cache_root, loader, codename, mcver) != 0)
+        return MCPKG_ERROR_OOM;
+    if (ensure_dir(mods_dir) != 0) {
+        free(mods_dir);
         return MCPKG_ERROR_FS;
     }
 
-    // Download JAR to mods dir
-    if (!entry->file_name || !entry->url) {
-        fprintf(stderr, "Selected version has no file URL.\n");
-        cJSON_Delete(versions); mcpkg_cache_free(cache); free(mods_dir); free(install_db);
-        return MCPKG_ERROR_PARSE;
-    }
-
-    char *dest = NULL;
-    if (asprintf(&dest, "%s/%s", mods_dir, entry->file_name) < 0) {
-        cJSON_Delete(versions); mcpkg_cache_free(cache); free(mods_dir); free(install_db);
+    // Packages.install path
+    char *install_db = NULL;
+    if (install_db_path(&install_db, cache_root, loader, codename, mcver) != 0) {
+        free(mods_dir);
         return MCPKG_ERROR_OOM;
     }
 
-    // rc = http_download_to_file(client->client, entry->url, entry->sha, dest);
-    free(dest);
+    // Optional: ensure search cache is present (not strictly required for install)
+    McPkgCache *cache = mcpkg_cache_new();
+    if (!cache) {
+        free(mods_dir);
+        free(install_db);
+        return MCPKG_ERROR_OOM;
+    }
+    int rc = mcpkg_cache_load(cache, loader, mcver);
+    if (rc != MCPKG_ERROR_SUCCESS) {
+        fprintf(stderr, "Warning: search cache not available for %s/%s (continuing install anyway)\n", loader, mcver);
+        // Not fatal; continue without cache
+    }
 
-    /* Resolve and install recursively starting from the requested project (or version id) */
-    VisitedSet vs = {0};
+    // Resolve and install recursively starting from the target (uses install_single_entry internally)
+    VisitedSet vs = (VisitedSet){0};
     int dep_rc = resolve_and_install(client, id_or_slug, mods_dir, install_db, &vs);
     visited_free(&vs);
 
-    /* If our recursive resolver already installed the root, we’re done.
-   If it skipped the root (e.g., if id_or_slug was a slug and we also
-   installed via version id), we’re still fine. */
-    if (dep_rc != MCPKG_ERROR_SUCCESS) {
-        cJSON_Delete(versions);
-        mcpkg_cache_free(cache);
-        free(mods_dir);
-        free(install_db);
-        return dep_rc;
-    }
-    cJSON_Delete(versions);
+    // Cleanup
     mcpkg_cache_free(cache);
     free(mods_dir);
     free(install_db);
 
-    return rc;
+    return dep_rc;
 }
