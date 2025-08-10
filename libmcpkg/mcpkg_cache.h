@@ -27,7 +27,7 @@ void mcpkg_cache_free(McPkgCache *cache);
  * Loads the package information from the local cache.
  * @param mod_loader e.g., "fabric"
  * @param version e.g., "1.21.8"
- * @return 0 on success, or a mcpkg_error_types code on failure.
+ * @return 0 on success, or a MCPKG_ERROR_TYPE code on failure.
  */
 int mcpkg_cache_load(McPkgCache *cache, const char *mod_loader, const char *version);
 

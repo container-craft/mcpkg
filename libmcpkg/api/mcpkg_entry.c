@@ -3,65 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <inttypes.h> /* PRIu64 */
+#include <inttypes.h>
 
-#define S(x) ((x) ? (x) : "(null)")
+#include "utils/mcpkg_msgpack.h"
 
-/* -------- helpers -------- */
-
-static int equal_key(msgpack_object k, const char *lit) {
-    size_t n = strlen(lit);
-    return (k.type == MSGPACK_OBJECT_STR &&
-            k.via.str.size == n &&
-            memcmp(k.via.str.ptr, lit, n) == 0);
-}
-
-static void pack_str_or_nil(msgpack_packer *pk, const char *s) {
-    if (!s) { msgpack_pack_nil(pk); return; }
-    size_t n = strlen(s);
-    msgpack_pack_str(pk, n);
-    msgpack_pack_str_body(pk, s, n);
-}
-
-static int appendf(char **dst, const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    char *add = NULL;
-    int nw = vasprintf(&add, fmt, ap);
-    va_end(ap);
-    if (nw < 0) return -1;
-
-    if (!*dst) {
-        *dst = add;
-    } else {
-        size_t oldlen = strlen(*dst);
-        char *tmp = (char *)realloc(*dst, oldlen + (size_t)nw + 1);
-        if (!tmp) { free(add); return -1; }
-        memcpy(tmp + oldlen, add, (size_t)nw + 1);
-        free(add);
-        *dst = tmp;
-    }
-    return 0;
-}
-
-/* msgpack string -> add to str_array (without leaking) */
-static void str_array_add_from_msgpack_str(str_array *arr, const msgpack_object_str s) {
-    if (!arr || !s.ptr || s.size == 0) return;
-    char *tmp = (char *)malloc(s.size + 1);
-    if (!tmp) return;
-    memcpy(tmp, s.ptr, s.size);
-    tmp[s.size] = '\0';
-    /* str_array_add duplicates; free our temp afterwards */
-    str_array_add(arr, tmp);
-    free(tmp);
-}
-
-/* -------- API -------- */
-
-McPkgEntry *mcpkg_entry_new(void) {
+McPkgEntry *mcpkg_entry_new(void)
+{
     McPkgEntry *entry = (McPkgEntry *)calloc(1, sizeof(McPkgEntry));
-    if (!entry) return NULL;
+    if (!entry)
+        return NULL;
+
     entry->loaders = str_array_new();
     entry->versions = str_array_new();
     entry->dependencies = NULL;
@@ -69,8 +20,11 @@ McPkgEntry *mcpkg_entry_new(void) {
     return entry;
 }
 
-void mcpkg_entry_free(McPkgEntry *entry) {
-    if (!entry) return;
+void mcpkg_entry_free(McPkgEntry *entry)
+{
+    if (!entry)
+        return;
+
     free(entry->id);
     free(entry->name);
     free(entry->author);
@@ -81,16 +35,22 @@ void mcpkg_entry_free(McPkgEntry *entry) {
     free(entry->url);
     free(entry->version);
     free(entry->date_published);
+
+    // TODO double check the release of this memory when I get a chance.
     if (entry->dependencies) {
         for (size_t i = 0; i < entry->dependencies_count; ++i)
             mcpkg_deps_free(entry->dependencies[i]);
+
         free(entry->dependencies);
     }
     free(entry);
 }
 
-int mcpkg_entry_pack(const McPkgEntry *entry, msgpack_sbuffer *sbuf) {
-    if (!entry || !sbuf) return 1;
+MCPKG_ERROR_TYPE mcpkg_entry_pack(const McPkgEntry *entry,
+                     msgpack_sbuffer *sbuf)
+{
+    if (!entry || !sbuf)
+        return MCPKG_ERROR_OOM;
 
     msgpack_packer pk;
     msgpack_packer_init(&pk, sbuf, msgpack_sbuffer_write);
@@ -111,13 +71,19 @@ int mcpkg_entry_pack(const McPkgEntry *entry, msgpack_sbuffer *sbuf) {
     pack_str_or_nil(&pk, entry->sha);
 
     msgpack_pack_str_with_body(&pk, "loaders", 7);
-    if (entry->loaders) str_array_pack(&pk, entry->loaders); else msgpack_pack_array(&pk, 0);
+    if (entry->loaders)
+        str_array_pack(&pk, entry->loaders);
+    else
+        msgpack_pack_array(&pk, 0);
 
     msgpack_pack_str_with_body(&pk, "url", 3);
     pack_str_or_nil(&pk, entry->url);
 
     msgpack_pack_str_with_body(&pk, "versions", 8);
-    if (entry->versions) str_array_pack(&pk, entry->versions); else msgpack_pack_array(&pk, 0);
+    if (entry->versions)
+        str_array_pack(&pk, entry->versions);
+    else
+        msgpack_pack_array(&pk, 0);
 
     msgpack_pack_str_with_body(&pk, "version", 7);
     pack_str_or_nil(&pk, entry->version);
@@ -131,6 +97,8 @@ int mcpkg_entry_pack(const McPkgEntry *entry, msgpack_sbuffer *sbuf) {
     msgpack_pack_str_with_body(&pk, "size", 4);
     msgpack_pack_uint64(&pk, entry->size);
 
+
+    // TODO watch this in the debugger later when I get a chance
     msgpack_pack_str_with_body(&pk, "dependencies", 12);
     if (!entry->dependencies || entry->dependencies_count == 0) {
         msgpack_pack_array(&pk, 0);
@@ -141,11 +109,18 @@ int mcpkg_entry_pack(const McPkgEntry *entry, msgpack_sbuffer *sbuf) {
         }
     }
 
-    return 0;
+    return MCPKG_ERROR_SUCCESS;
 }
 
-int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry) {
-    if (!entry_obj || entry_obj->type != MSGPACK_OBJECT_MAP || !entry) return 1;
+MCPKG_ERROR_TYPE mcpkg_entry_unpack(msgpack_object *entry_obj,
+                                    McPkgEntry *entry)
+{
+    if (!entry_obj || !entry)
+        return MCPKG_ERROR_OOM;
+
+    if(entry_obj->type != MSGPACK_OBJECT_MAP)
+        return MCPKG_ERROR_PARSE;
+
 
     msgpack_object_map map = entry_obj->via.map;
 
@@ -154,16 +129,27 @@ int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry) {
         msgpack_object val = map.ptr[i].val;
 
         if (equal_key(key, "id")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->id = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->id = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "name")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->name = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->name = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "author")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->author = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->author = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "sha")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->sha = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->sha = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "loaders")) {
             if (val.type == MSGPACK_OBJECT_ARRAY) {
-                if (entry->loaders) str_array_free(entry->loaders);
+
+                if (entry->loaders)
+                    str_array_free(entry->loaders);
+
                 entry->loaders = str_array_new();
                 for (size_t j = 0; j < val.via.array.size; ++j) {
                     msgpack_object *elem = &val.via.array.ptr[j];
@@ -171,11 +157,16 @@ int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry) {
                         str_array_add_from_msgpack_str(entry->loaders, elem->via.str);
                 }
             }
+
         } else if (equal_key(key, "url")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->url = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->url = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "versions")) {
             if (val.type == MSGPACK_OBJECT_ARRAY) {
-                if (entry->versions) str_array_free(entry->versions);
+                if (entry->versions)
+                    str_array_free(entry->versions);
+
                 entry->versions = str_array_new();
                 for (size_t j = 0; j < val.via.array.size; ++j) {
                     msgpack_object *elem = &val.via.array.ptr[j];
@@ -183,35 +174,48 @@ int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry) {
                         str_array_add_from_msgpack_str(entry->versions, elem->via.str);
                 }
             }
+
         } else if (equal_key(key, "version")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->version = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->version = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "file_name")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->file_name = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->file_name = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "date_published")) {
-            if (val.type == MSGPACK_OBJECT_STR) entry->date_published = strndup(val.via.str.ptr, val.via.str.size);
+            if (val.type == MSGPACK_OBJECT_STR)
+                entry->date_published = strndup(val.via.str.ptr, val.via.str.size);
+
         } else if (equal_key(key, "size")) {
-            if (val.type == MSGPACK_OBJECT_POSITIVE_INTEGER) entry->size = val.via.u64;
+            if (val.type == MSGPACK_OBJECT_POSITIVE_INTEGER)
+                entry->size = val.via.u64;
+
+        // TODO DOUBLE CHECK
         } else if (equal_key(key, "dependencies")) {
             if (val.type == MSGPACK_OBJECT_ARRAY) {
                 size_t n = val.via.array.size;
                 if (n == 0) {
-                    /* nothing to do */
+                    // no deps ?
                 } else {
-                    entry->dependencies = (McPkgDeps **)calloc(n, sizeof(McPkgDeps *));
-                    if (!entry->dependencies) return 1;
+                    entry->dependencies = (McPkgDeps **)calloc(n, sizeof(McPkgDeps *)); // MEMORY
+                    if (!entry->dependencies)
+                        return MCPKG_ERROR_OOM;
+
                     entry->dependencies_count = 0;
                     for (size_t j = 0; j < n; ++j) {
+
                         msgpack_object *elem = &val.via.array.ptr[j];
                         if (elem->type != MSGPACK_OBJECT_MAP) {
                             entry->dependencies[j] = NULL;
                             continue;
                         }
-                        McPkgDeps *dep = mcpkg_deps_new();
+                        McPkgDeps *dep = mcpkg_deps_new(); // MEMORY
                         if (!dep) {
                             entry->dependencies[j] = NULL;
                             continue;
                         }
-                        if (mcpkg_deps_unpack(elem, dep) != 0) {
+                        if (mcpkg_deps_unpack(elem, dep) != MCPKG_ERROR_SUCCESS) {
                             mcpkg_deps_free(dep);
                             entry->dependencies[j] = NULL;
                             continue;
@@ -223,11 +227,13 @@ int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry) {
             }
         }
     }
-    return 0;
+    return MCPKG_ERROR_SUCCESS;
 }
 
-char *mcpkg_entry_to_string(const McPkgEntry *entry) {
-    if (!entry) return strdup("NULL");
+char *mcpkg_entry_to_string(const McPkgEntry *entry)
+{
+    if (!entry)
+        return strdup("NULL");
 
     char *loaders_str  = entry->loaders  ? str_array_to_string(entry->loaders)  : strdup("[]");
     char *versions_str = entry->versions ? str_array_to_string(entry->versions) : strdup("[]");
@@ -248,10 +254,19 @@ char *mcpkg_entry_to_string(const McPkgEntry *entry) {
             "  size: %" PRIu64 "\n"
             "  dependencies_count: %zu\n"
             "}\n",
-            S(entry->id), S(entry->name), S(entry->author), S(entry->sha),
-            S(loaders_str), S(entry->url), S(versions_str), S(entry->version),
-            S(entry->file_name), S(entry->date_published), entry->size,
-            entry->dependencies_count);
+            mcpkg_safe_str(entry->id),
+            mcpkg_safe_str(entry->name),
+            mcpkg_safe_str(entry->author),
+            mcpkg_safe_str(entry->sha),
+            mcpkg_safe_str(loaders_str),
+            mcpkg_safe_str(entry->url),
+            mcpkg_safe_str(versions_str),
+            mcpkg_safe_str(entry->version),
+            mcpkg_safe_str(entry->file_name),
+            mcpkg_safe_str(entry->date_published),
+            entry->size,
+            entry->dependencies_count
+            );
 
     free(loaders_str);
     free(versions_str);

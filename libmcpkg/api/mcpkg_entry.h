@@ -1,16 +1,23 @@
 #ifndef MCPKG_ENTRY_H
 #define MCPKG_ENTRY_H
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <msgpack.h>
 #include <cjson/cJSON.h>
-#include <stdbool.h>
 #include <time.h>
 
+#include "mcpkg.h"
 #include "utils/array_helper.h"
+
+
 #include "api/mcpkg_deps_entry.h"
 #include "mcpkg_export.h"
 MCPKG_BEGIN_DECLS
+
+/*!
+ * The main INSTALL struct
+ */
 typedef struct McPkgEntry {
     char *id;
     char *name;
@@ -27,26 +34,14 @@ typedef struct McPkgEntry {
     size_t dependencies_count;
 } McPkgEntry;
 
-/** Allocates and initializes a new McPkgEntry struct (arrays pre-created). */
 McPkgEntry *mcpkg_entry_new(void);
-
-/** Frees all memory associated with an McPkgEntry struct. */
 void mcpkg_entry_free(McPkgEntry *entry);
 
-/** Packs an McPkgEntry into a msgpack buffer as a single map. Returns 0 on success. */
-int mcpkg_entry_pack(const McPkgEntry *entry, msgpack_sbuffer *sbuf);
+MCPKG_ERROR_TYPE mcpkg_entry_pack(const McPkgEntry *entry, msgpack_sbuffer *sbuf);
+MCPKG_ERROR_TYPE mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry);
 
-/** Unpacks a msgpack object map into an McPkgEntry. Returns 0 on success. */
-int mcpkg_entry_unpack(msgpack_object *entry_obj, McPkgEntry *entry);
-
-/** Converts an McPkgEntry to a debug string (caller frees). */
+// MAKE sure you free what you pass in its new
 char *mcpkg_entry_to_string(const McPkgEntry *entry);
 
-static void mcpkg_sleep_ms(long milliseconds) {
-    struct timespec ts;
-    ts.tv_sec = milliseconds / 1000;
-    ts.tv_nsec = (milliseconds % 1000) * 1000000;
-    nanosleep(&ts, &ts);
-}
 MCPKG_END_DECLS
 #endif /* MCPKG_ENTRY_H */

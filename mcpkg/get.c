@@ -8,14 +8,14 @@
 #include <utils/array_helper.h>
 #include <api/modrith_client.h>
 
-mcpkg_error_types install_command(const char *mc_version, const char *mod_loader, str_array *packages)
+MCPKG_ERROR_TYPE install_command(const char *mc_version, const char *mod_loader, str_array *packages)
 {
     if (!mc_version || !mod_loader || !packages || packages->count == 0) {
         fprintf(stderr, "install: missing version/loader/packages\n");
         return MCPKG_ERROR_PARSE;
     }
 
-    mcpkg_error_types rc = mcpkg_get_install(mc_version, mod_loader, packages);
+    MCPKG_ERROR_TYPE rc = mcpkg_get_install(mc_version, mod_loader, packages);
     if (rc != MCPKG_ERROR_SUCCESS) {
         fprintf(stderr, "install: one or more installs failed (code %d)\n", rc);
         return rc;
@@ -23,14 +23,14 @@ mcpkg_error_types install_command(const char *mc_version, const char *mod_loader
     return MCPKG_ERROR_SUCCESS;
 }
 
-mcpkg_error_types remove_command(const char *mc_version, const char *mod_loader, str_array *packages)
+MCPKG_ERROR_TYPE remove_command(const char *mc_version, const char *mod_loader, str_array *packages)
 {
     if (!mc_version || !mod_loader || !packages || packages->count == 0) {
         fprintf(stderr, "remove: missing version/loader/packages\n");
         return MCPKG_ERROR_PARSE;
     }
 
-    mcpkg_error_types rc = mcpkg_get_remove(mc_version, mod_loader, packages);
+    MCPKG_ERROR_TYPE rc = mcpkg_get_remove(mc_version, mod_loader, packages);
     if (rc != MCPKG_ERROR_SUCCESS) {
         fprintf(stderr, "remove: one or more removals failed (code %d)\n", rc);
         return rc;
@@ -38,7 +38,7 @@ mcpkg_error_types remove_command(const char *mc_version, const char *mod_loader,
     return MCPKG_ERROR_SUCCESS;
 }
 
-mcpkg_error_types policy_command(const char *mc_version, const char *mod_loader, str_array *packages)
+MCPKG_ERROR_TYPE policy_command(const char *mc_version, const char *mod_loader, str_array *packages)
 {
     if (!mc_version || !mod_loader || !packages || packages->count == 0) {
         fprintf(stderr, "policy: missing version/loader/packages\n");
@@ -57,7 +57,7 @@ mcpkg_error_types policy_command(const char *mc_version, const char *mod_loader,
     return MCPKG_ERROR_SUCCESS;
 }
 
-mcpkg_error_types upgrade_command(const char *mc_version, const char *mod_loader)
+MCPKG_ERROR_TYPE upgrade_command(const char *mc_version, const char *mod_loader)
 {
     if (!mc_version || !mod_loader) {
         fprintf(stderr, "Error: missing Minecraft version or loader.\n");

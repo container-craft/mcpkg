@@ -7,8 +7,12 @@
 #include "utils/code_names.h"
 
 // Simple download (sha verification TODO)
-int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_or_null, const char *dest_path) {
-    (void)sha_hex_or_null; // TODO: implement sha512 verify
+MCPKG_ERROR_TYPE mcpkg_get_download(ApiClient *api,
+                       const char *url,
+                       const char *sha,
+                       const char *dest_path)
+{
+    (void)sha; // TODO: implement sha512 and others verify
     if (!api || !api->curl || !url || !dest_path)
         return MCPKG_ERROR_GENERAL;
 
@@ -33,8 +37,6 @@ int http_download_to_file(ApiClient *api, const char *url, const char *sha_hex_o
 }
 
 
-
-
 McPkgGet *mcpkg_get_new()
 {
     McPkgGet *g = calloc(1, sizeof(McPkgGet));
@@ -45,27 +47,32 @@ void mcpkg_get_free(McPkgGet *get)
 {
     if (!get)
         return;
+
     free(get->base_path);
     if (get->mods) {
         for (size_t i = 0; i < get->mods_count; ++i) mcpkg_entry_free(get->mods[i]);
         free(get->mods);
     }
+
     free(get);
 }
 
 
-static const char *find_installed_version(const char *cache_root,
+static const char *mcpkg_get_find_installed_version(const char *cache_root,
                                           const char *loader,
                                           const char *mcver,
                                           const char *codename,
                                           const char *id_or_slug)
 {
     char *install_db = NULL;
-    if (install_db_path(&install_db, cache_root, loader, codename, mcver) != 0)
+    if (mcpkg_fs_db_dir(&install_db,
+                        cache_root,
+                        loader,
+                        codename, mcver) != 0)
         return NULL;
 
     McPkgEntry **installed = NULL; size_t installed_count = 0;
-    (void)install_db_load(install_db, &installed, &installed_count);
+    (void)mcpkg_get_db(install_db, &installed, &installed_count);
     free(install_db);
 
     const char *found = NULL;
@@ -92,7 +99,9 @@ static const char *find_installed_version(const char *cache_root,
     return ret; // caller must free
 }
 
-int mcpkg_get_install(const char *mc_version, const char *mod_loader, str_array *packages)
+MCPKG_ERROR_TYPE mcpkg_get_install(const char *mc_version,
+                      const char *mod_loader,
+                      str_array *packages)
 {
     if (!mc_version || !mod_loader || !packages || packages->count == 0) {
         fprintf(stderr, "install: invalid arguments\n");
@@ -109,7 +118,7 @@ int mcpkg_get_install(const char *mc_version, const char *mod_loader, str_array 
     }
 
     // Create a Modrinth client tied to this version/loader
-    ModrithApiClient *client = modrith_client_new(mc_version, mod_loader);
+    ModrithApiClient *client = modrith_client_new(mc_version, mcpkg_modloader_from_str(mod_loader));
     if (!client) {
         fprintf(stderr, "install: failed to create Modrinth client\n");
         return MCPKG_ERROR_OOM;
@@ -123,7 +132,7 @@ int mcpkg_get_install(const char *mc_version, const char *mod_loader, str_array 
             continue;
 
         // Check if already installed (same version)
-        char *installed_ver = (char *)find_installed_version(cache_root, mod_loader, mc_version, codename, pkg);
+        char *installed_ver = (char *)mcpkg_get_find_installed_version(cache_root, mod_loader, mc_version, codename, pkg);
         if (installed_ver) {
             // Ask Modrinth for the best candidate to compare; if same, skip
             cJSON *versions = modrith_get_versions_json(client, pkg);
@@ -144,7 +153,8 @@ int mcpkg_get_install(const char *mc_version, const char *mod_loader, str_array 
                             continue; // next package
                         }
                     }
-                    if (tmp) mcpkg_entry_free(tmp);
+                    if (tmp)
+                        mcpkg_entry_free(tmp);
                 }
                 cJSON_Delete(versions);
             }
@@ -187,11 +197,17 @@ int mcpkg_get_remove(const char *mc_version, const char *mod_loader, str_array *
 
     // Resolve paths
     char *mods_dir = NULL;
-    if (mods_dir_path(&mods_dir, cache_root, mod_loader, codename, mc_version) != 0)
+    if (mcpkg_fs_mods_dir(&mods_dir,
+                          cache_root,
+                          mod_loader,
+                          codename, mc_version) != 0)
         return MCPKG_ERROR_OOM;
 
     char *install_db = NULL;
-    if (install_db_path(&install_db, cache_root, mod_loader, codename, mc_version) != 0) {
+    if (mcpkg_fs_db_dir(&install_db,
+                        cache_root,
+                        mod_loader,
+                        codename, mc_version) != 0) {
         free(mods_dir);
         return MCPKG_ERROR_OOM;
     }
@@ -205,7 +221,7 @@ int mcpkg_get_remove(const char *mc_version, const char *mod_loader, str_array *
 
     // Load current DB
     McPkgEntry **entries = NULL; size_t count = 0;
-    if (install_db_load(install_db, &entries, &count) != 0) {
+    if (mcpkg_get_db(install_db, &entries, &count) != MCPKG_ERROR_SUCCESS) {
         free(mods_dir);
         free(install_db);
         return MCPKG_ERROR_FS;
@@ -215,12 +231,14 @@ int mcpkg_get_remove(const char *mc_version, const char *mod_loader, str_array *
     size_t kept = 0;
     for (size_t i = 0; i < count; ++i) {
         McPkgEntry *e = entries[i];
-        if (!e) continue;
+        if (!e)
+            continue;
 
         int should_delete = 0;
         for (size_t p = 0; p < packages->count; ++p) {
             const char *q = packages->elements[p];
-            if (!q) continue;
+            if (!q)
+                continue;
             if ((e->name && strcmp(e->name, q) == 0) ||
                 (e->id   && strcmp(e->id,   q) == 0)) {
                 should_delete = 1;
@@ -268,7 +286,7 @@ int mcpkg_get_remove(const char *mc_version, const char *mod_loader, str_array *
         // Option B (alternative): unlink(install_db);
     } else {
         // Write kept entries back
-        rc = install_db_write_all(install_db, entries, kept) == 0 ? MCPKG_ERROR_SUCCESS : MCPKG_ERROR_FS;
+        rc = mcpkg_get_db_write_all(install_db, entries, kept) == 0 ? MCPKG_ERROR_SUCCESS : MCPKG_ERROR_FS;
     }
 
     // Free the compacted entries array
@@ -296,7 +314,8 @@ static int buf_appendf(char **buf, size_t *len, size_t *cap, const char *fmt, ..
         va_start(ap, fmt);
         int need = vsnprintf((*buf) ? *buf + *len : NULL, (*buf && *cap > *len) ? *cap - *len : 0, fmt, ap);
         va_end(ap);
-        if (need < 0) return -1;                      // formatting error
+        if (need < 0)
+            return -1;
 
         size_t need_sz = (size_t)need;
         if (*buf && *len + need_sz + 1 <= *cap) {     // fits
@@ -307,18 +326,24 @@ static int buf_appendf(char **buf, size_t *len, size_t *cap, const char *fmt, ..
         // grow
         size_t newcap = (*cap ? *cap * 2 : 512);
         size_t mincap = *len + need_sz + 1;
-        if (newcap < mincap) newcap = mincap;
+        if (newcap < mincap)
+            newcap = mincap;
 
         char *tmp = (char *)realloc(*buf, newcap);
-        if (!tmp) return -1;                          // OOM, leave original intact
+        if (!tmp)
+            return -1;                          // OOM, leave original intact
 
         *buf = tmp;
         *cap = newcap;
+        // FIXME
         // loop to actually write into the newly grown buffer
     }
 }
 
-char *mcpkg_get_policy(const char *mc_version, const char *mod_loader, str_array *packages) {
+char *mcpkg_get_policy(const char *mc_version,
+                       const char *mod_loader,
+                       str_array *packages)
+{
     if (!mc_version || !mod_loader || !packages)
         return strdup("(invalid arguments)");
 
@@ -331,15 +356,18 @@ char *mcpkg_get_policy(const char *mc_version, const char *mod_loader, str_array
         return strdup("(unknown Minecraft version codename)");
 
     char *install_db = NULL;
-    if (install_db_path(&install_db, cache_root, mod_loader, codename, mc_version) != 0)
+    if (mcpkg_fs_db_dir(&install_db,
+                        cache_root,
+                        mod_loader,
+                        codename, mc_version) != 0)
         return strdup("(oom)");
 
     McPkgEntry **installed = NULL;
     size_t installed_count = 0;
-    (void)install_db_load(install_db, &installed, &installed_count);
+    (void)mcpkg_get_db(install_db, &installed, &installed_count);
 
     // Prepare Modrinth API client for candidate version lookups
-    ModrithApiClient *client = modrith_client_new(mc_version, mod_loader);
+    ModrithApiClient *client = modrith_client_new(mc_version, mcpkg_modloader_from_str(mod_loader));
     if (!client) {
         free(install_db);
         return strdup("(failed to init API client)");
@@ -407,19 +435,22 @@ oom:
     return strdup("(oom)");
 }
 
-int mcpkg_get_upgreade(const char *mc_version, const char *mod_loader)
+int mcpkg_get_upgreade(const char *mc_version,
+                       const char *mod_loader)
 {
-    if (!mc_version || !mod_loader) return MCPKG_ERROR_PARSE;
+    if (!mc_version || !mod_loader)
+        return MCPKG_ERROR_PARSE;
 
     const char *cache_root = getenv(ENV_MCPKG_CACHE);
     if (!cache_root) cache_root = MCPKG_CACHE;
 
     const char *codename = codename_for_version(mc_version);
-    if (!codename) return MCPKG_ERROR_VERSION_MISMATCH;
+    if (!codename)
+        return MCPKG_ERROR_VERSION_MISMATCH;
 
     // Paths
     char *install_db = NULL;
-    if (install_db_path(&install_db, cache_root, mod_loader, codename, mc_version) != 0)
+    if (mcpkg_fs_db_dir(&install_db, cache_root, mod_loader, codename, mc_version) != 0)
         return MCPKG_ERROR_OOM;
 
     // Load installed DB; if missing, nothing to do
@@ -430,7 +461,7 @@ int mcpkg_get_upgreade(const char *mc_version, const char *mod_loader)
     }
 
     McPkgEntry **installed = NULL; size_t installed_count = 0;
-    if (install_db_load(install_db, &installed, &installed_count) != 0) {
+    if (mcpkg_get_db(install_db, &installed, &installed_count) != 0) {
         free(install_db);
         return MCPKG_ERROR_FS;
     }
@@ -443,7 +474,7 @@ int mcpkg_get_upgreade(const char *mc_version, const char *mod_loader)
     }
 
     // Modrinth client for lookups and installs
-    ModrithApiClient *client = modrith_client_new(mc_version, mod_loader);
+    ModrithApiClient *client = modrith_client_new(mc_version, mcpkg_modloader_from_str(mod_loader));
     if (!client) {
         for (size_t i = 0; i < installed_count; ++i) mcpkg_entry_free(installed[i]);
         free(installed);
@@ -455,11 +486,13 @@ int mcpkg_get_upgreade(const char *mc_version, const char *mod_loader)
 
     for (size_t i = 0; i < installed_count; ++i) {
         McPkgEntry *e = installed[i];
-        if (!e) continue;
+        if (!e)
+            continue;
 
         // Prefer project id if available; otherwise slug (name)
         const char *identifier = e->id ? e->id : e->name;
-        if (!identifier || !*identifier) continue;
+        if (!identifier || !*identifier)
+            continue;
 
         // Fetch candidate
         const char *candidate_ver = NULL;
@@ -501,8 +534,9 @@ int mcpkg_get_upgreade(const char *mc_version, const char *mod_loader)
         }
     }
 
-    // Cleanup
-    for (size_t i = 0; i < installed_count; ++i) mcpkg_entry_free(installed[i]);
+    for (size_t i = 0; i < installed_count; ++i)
+        mcpkg_entry_free(installed[i]);
+
     free(installed);
     modrith_client_free(client);
     free(install_db);

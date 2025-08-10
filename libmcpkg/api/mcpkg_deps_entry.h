@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <msgpack.h>
 #include <stdbool.h>
+#include "mcpkg.h"
 #include "utils/array_helper.h"
 #include "mcpkg_export.h"
 MCPKG_BEGIN_DECLS
@@ -25,10 +26,10 @@ McPkgDeps *mcpkg_deps_new(void);
 void mcpkg_deps_free(McPkgDeps *deps);
 
 /** Pack into an existing msgpack packer (writes a map) */
-int mcpkg_deps_pack(msgpack_packer *pk, const McPkgDeps *deps);
+MCPKG_ERROR_TYPE mcpkg_deps_pack(msgpack_packer *pk, const McPkgDeps *deps);
 
 /** Unpack from a msgpack object map into an existing struct */
-int mcpkg_deps_unpack(msgpack_object *deps_obj, McPkgDeps *deps);
+MCPKG_ERROR_TYPE mcpkg_deps_unpack(msgpack_object *deps_obj, McPkgDeps *deps);
 
 /** Pretty print (caller frees) */
 char *mcpkg_deps_to_string(const McPkgDeps *deps);

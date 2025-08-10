@@ -7,7 +7,7 @@
 #include <utils/array_helper.h>
 
 int run_update_command(const char *mc_version, const char *mod_loader) {
-    ModrithApiClient *modrith_client = modrith_client_new(mc_version, mod_loader);
+    ModrithApiClient *modrith_client = modrith_client_new(mc_version, mcpkg_modloader_from_str(mod_loader));
     if (!modrith_client) {
         fprintf(stderr, "Failed to create Modrinth API client.\n");
         return 1;

@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
             if (argv[i] && *argv[i]) (void)str_array_add(packages, argv[i]);
         }
 
-        mcpkg_error_types rc = install_command(mc_version, mod_loader, packages);
+        MCPKG_ERROR_TYPE rc = install_command(mc_version, mod_loader, packages);
         str_array_free(packages);
         return rc;
 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
                 (void)str_array_add(packages, argv[i]);
         }
 
-        mcpkg_error_types rc = remove_command(mc_version, mod_loader, packages);
+        MCPKG_ERROR_TYPE rc = remove_command(mc_version, mod_loader, packages);
         str_array_free(packages);
         return rc;
 
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
             if (argv[i] && *argv[i]) (void)str_array_add(packages, argv[i]);
         }
 
-        mcpkg_error_types rc = policy_command(mc_version, mod_loader, packages);
+        MCPKG_ERROR_TYPE rc = policy_command(mc_version, mod_loader, packages);
         str_array_free(packages);
         return rc;
 
@@ -207,11 +207,11 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "Error: 'global mcbase' requires a path.\n");
                 return 1;
             }
-            mcpkg_error_types rc = set_global_mc_base(val);
+            MCPKG_ERROR_TYPE rc = set_global_mc_base(val);
             if (rc != MCPKG_ERROR_SUCCESS) return rc;
 
             // Re-activate using current CLI/env version+loader
-            mcpkg_error_types arc = mcpkg_activate(mc_version, mod_loader);
+            MCPKG_ERROR_TYPE arc = mcpkg_activate(mc_version, mod_loader);
             if (arc != MCPKG_ERROR_SUCCESS) {
                 fprintf(stderr, "Warning: set mcbase OK, but activate failed (%d)\n", arc);
             }
@@ -222,11 +222,11 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "Error: 'global loader' requires a loader name.\n");
                 return 1;
             }
-            mcpkg_error_types rc = set_global_mc_loader(val);
+            MCPKG_ERROR_TYPE rc = set_global_mc_loader(val);
             if (rc != MCPKG_ERROR_SUCCESS) return rc;
 
             // Re-activate using NEW loader + current version
-            mcpkg_error_types arc = mcpkg_activate(mc_version, val);
+            MCPKG_ERROR_TYPE arc = mcpkg_activate(mc_version, val);
             if (arc != MCPKG_ERROR_SUCCESS) {
                 fprintf(stderr, "Warning: set loader OK, but activate failed (%d)\n", arc);
             }
@@ -237,11 +237,11 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "Error: 'global version' requires a Minecraft version.\n");
                 return 1;
             }
-            mcpkg_error_types rc = set_global_mc_version(val);
+            MCPKG_ERROR_TYPE rc = set_global_mc_version(val);
             if (rc != MCPKG_ERROR_SUCCESS) return rc;
 
             // Re-activate using NEW version + current loader
-            mcpkg_error_types arc = mcpkg_activate(val, mod_loader);
+            MCPKG_ERROR_TYPE arc = mcpkg_activate(val, mod_loader);
             if (arc != MCPKG_ERROR_SUCCESS) {
                 fprintf(stderr, "Warning: set version OK, but activate failed (%d)\n", arc);
             }

@@ -10,11 +10,12 @@
 #include <libgen.h>
 
 #include "mcpkg.h"
+#include "mcpkg_get.h"
 #include "utils/code_names.h"
 #include "utils/mcpkg_fs.h"
 #include "mcpkg_info_entry.h"
 #include "mcpkg_cache.h"
-#include "mcpkg_get.h"
+#include "utils/mcpkg_visited_set.h"
 #include "api/mcpkg_entry.h"
 #include "api/mcpkg_deps_entry.h"
 #include "utils/array_helper.h"
@@ -73,19 +74,35 @@ static McPkgInfoEntry *mcpkg_info_entry_from_cjson(cJSON *mod_item) {
 }
 
 
-ModrithApiClient *modrith_client_new(const char *mc_version, const char *mod_loader) {
+ModrithApiClient *modrith_client_new(const char *mc_version,
+                                     MOD_LOADER_TYPE mod_loader)
+{
     ModrithApiClient *client_data = calloc(1, sizeof(ModrithApiClient));
-    if (!client_data) return NULL;
+    if (!client_data)
+        return NULL;
 
-    client_data->client = api_client_new();
+    client_data->client = api_client_new();    
     if (!client_data->client) {
         free(client_data);
         return NULL;
     }
+    // https://docs.modrinth.com/api/ -> Ratelimits
+    client_data->client->ratelimit_remaining = 300;
+    client_data->client->ratelimit_reset = 60;
 
-    client_data->mc_version = mc_version ? strdup(mc_version) : NULL;
-    client_data->mod_loader = mod_loader ? strdup(mod_loader) : NULL;
-    client_data->user_agent = MCPKG_USER_AGENT;
+
+    const char *ver = getenv(ENV_MC_VERSION);
+    if (!ver)
+        ver = MC_DEFAULT_VERSION;
+    client_data->mc_version = strdup(ver);
+
+    const char *loader_to_use = getenv(ENV_MC_LOADER);
+    if (loader_to_use){
+        MOD_LOADER_TYPE loader = mcpkg_modloader_from_str(loader_to_use);
+        if(loader == MOD_LOADER_UNKNOWN)
+            client_data->mod_loader = MOD_LOADER_FABRIC;
+        client_data->mod_loader = loader;
+    }
 
     return client_data;
 }
@@ -93,46 +110,49 @@ ModrithApiClient *modrith_client_new(const char *mc_version, const char *mod_loa
 void modrith_client_free(ModrithApiClient *client_data) {
     if (!client_data)
         return;
+
     api_client_free(client_data->client);
     free(client_data->mc_version);
-    free(client_data->mod_loader);
+    // free(client_data->mod_loader);
     free(client_data);
 }
 
-int modrith_client_update(ModrithApiClient *client_data) {
+MCPKG_ERROR_TYPE modrith_client_update(ModrithApiClient *client_data) {
     size_t offset = 0;
     msgpack_sbuffer sbuf_all_mods;
     msgpack_sbuffer_init(&sbuf_all_mods);
 
-    const char *version_to_use = getenv(ENV_MC_VERSION);
-    if (!version_to_use) version_to_use = client_data->mc_version;
+    if(!client_data)
+        return MCPKG_ERROR_OOM;
 
-    const char *loader_to_use = getenv(ENV_MC_LOADER);
-    if (!loader_to_use) loader_to_use = client_data->mod_loader;
-
-    if (!version_to_use || !loader_to_use) {
+    if (!client_data->mc_version || client_data->mod_loader == MOD_LOADER_UNKNOWN) {
         fprintf(stderr, "Error: Minecraft version and loader must be specified.\n");
         return MCPKG_ERROR_GENERAL;
     }
 
     char cache_base_path[1024];
-    const char *cache_root = getenv(ENV_MCPKG_CACHE);
-    if (!cache_root) {
-        cache_root = MCPKG_CACHE;
-    }
 
-    const char *codename = codename_for_version(version_to_use);
+    const char *codename = codename_for_version(client_data->mc_version);
     if (!codename) {
-        fprintf(stderr, "Error: Unknown codename for version %s.\n", version_to_use);
+        fprintf(stderr, "Error: Unknown codename for version %s.\n", client_data->mc_version);
         return MCPKG_ERROR_GENERAL;
     }
 
-    snprintf(cache_base_path, sizeof(cache_base_path), "%s/%s/%s/%s",
-             cache_root, loader_to_use, codename, version_to_use);
+    snprintf(cache_base_path,
+             sizeof(cache_base_path), "%s/%s/%s/%s",
+             client_data->client->cache_root,
+             mcpkg_modloader_str(client_data->mod_loader),
+             codename,
+             client_data->mc_version
+             );
 
-    if (mkdir_p(cache_base_path) != MCPKG_ERROR_SUCCESS) {
-        fprintf(stderr, "Failed to create cache directory: %s\n", cache_base_path);
-        return MCPKG_ERROR_GENERAL;
+
+    if(mcpkg_fs_dir_exists(client_data->client->cache_root) == 0)
+    {
+        if (mcpkg_fs_mkdir(cache_base_path) != MCPKG_ERROR_SUCCESS) {
+            fprintf(stderr, "Failed to create cache directory: %s\n", cache_base_path);
+            return MCPKG_ERROR_FS;
+        }
     }
 
     char url[2048];
@@ -140,7 +160,9 @@ int modrith_client_update(ModrithApiClient *client_data) {
 
     while (true) {
         char facets_raw[256];
-        snprintf(facets_raw, sizeof(facets_raw), "[[\"categories:%s\"],[\"versions:%s\"]]", loader_to_use, version_to_use);
+        snprintf(facets_raw, sizeof(facets_raw), "[[\"categories:%s\"],[\"versions:%s\"]]",
+                 mcpkg_modloader_str(client_data->mod_loader),
+                 client_data->mc_version);
 
         char *facets_encoded = curl_easy_escape(curl, facets_raw, 0);
         if (!facets_encoded) {
@@ -148,8 +170,13 @@ int modrith_client_update(ModrithApiClient *client_data) {
             return MCPKG_ERROR_GENERAL;
         }
 
-        snprintf(url, sizeof(url), "%s?facets=%s&limit=100&offset=%zu&project_type=mod",
-                 MODRINTH_API_SEARCH_URL_BASE, facets_encoded, offset);
+        snprintf(url,
+                 sizeof(url),
+                 "%s?facets=%s&limit=100&offset=%zu&project_type=mod",
+                 MODRINTH_API_SEARCH_URL_BASE,
+                 facets_encoded,
+                 offset
+        );
 
         cJSON *json_response = api_client_get(client_data->client, url, NULL);
         if (!json_response) {
@@ -208,8 +235,12 @@ int modrith_client_update(ModrithApiClient *client_data) {
 
     // compressed
     char compressed_path[1024];
-    snprintf(compressed_path, sizeof(compressed_path), "%s/Packages.info.zstd", cache_base_path);
-    if (write_compressed_cache(compressed_path, sbuf_all_mods.data, sbuf_all_mods.size) != MCPKG_ERROR_SUCCESS) {
+    snprintf(compressed_path,
+             sizeof(compressed_path),
+             "%s/Packages.info.zstd",
+             cache_base_path
+    );
+    if (mcpkg_fs_compressed_file(compressed_path, sbuf_all_mods.data, sbuf_all_mods.size) != MCPKG_ERROR_SUCCESS) {
         fprintf(stderr, "Failed to write compressed cache.\n");
         msgpack_sbuffer_destroy(&sbuf_all_mods);
         return MCPKG_ERROR_GENERAL;
@@ -219,26 +250,38 @@ int modrith_client_update(ModrithApiClient *client_data) {
     return MCPKG_ERROR_SUCCESS;
 }
 
-static cJSON *modrith_get_version_by_id(ModrithApiClient *client, const char *version_id) {
-    if (!client || !version_id) return NULL;
+static cJSON *modrith_get_version_by_id(ModrithApiClient *client,
+                                        const char *version_id) {
+    if (!client || !version_id)
+        return NULL;
     char url[1024];
-    snprintf(url, sizeof(url), "https://api.modrinth.com/v2/version/%s", version_id);
+    snprintf(url, sizeof(url),
+             "%s%s",
+             MODRINTH_API_VERSION_URL_BASE,
+             version_id
+    );
     cJSON *json = api_client_get(client->client, url, NULL);
-    if (!json || !cJSON_IsObject(json)) { if (json) cJSON_Delete(json); return NULL; }
+    if (!json || !cJSON_IsObject(json)) {
+        if (json)
+            cJSON_Delete(json);
+        return NULL;
+    }
     return json;
 }
 
 
-static int resolve_and_install(ModrithApiClient *client,
+static MCPKG_ERROR_TYPE resolve_and_install(ModrithApiClient *client,
                                const char *id_or_slug,
                                const char *mods_dir,
                                const char *install_db,
                                VisitedSet *visited) {
-    if (!client || !id_or_slug) return MCPKG_ERROR_PARSE;
+    if (!client || !id_or_slug)
+        return MCPKG_ERROR_PARSE;
 
     /* If we’ve already processed this project, bail (cycle prevention). */
-    if (visited_contains(visited, id_or_slug)) return MCPKG_ERROR_SUCCESS;
-    visited_add(visited, id_or_slug);
+    if (mcpkg_visited_contains(visited, id_or_slug))
+        return MCPKG_ERROR_SUCCESS;
+    mcpkg_visited_add(visited, id_or_slug);
 
     /* Try specific version-id if caller passed one (heuristic: Modrinth version IDs are 8 chars of base62). */
     int rc = MCPKG_ERROR_SUCCESS;
@@ -250,19 +293,24 @@ static int resolve_and_install(ModrithApiClient *client,
     McPkgEntry *entry = NULL;
 
     if (version_json) {
-        /* Build entry from exact version */
         if (modrith_version_to_entry(version_json, &entry) != 0 || !entry) {
             cJSON_Delete(version_json);
             return MCPKG_ERROR_PARSE;
         }
+
         cJSON_Delete(version_json);
+
     } else {
         /* Otherwise pick latest compatible version for project id/slug */
         cJSON *versions = modrith_get_versions_json(client, id_or_slug);
-        if (!versions) return MCPKG_ERROR_NETWORK;
+        if (!versions)
+            return MCPKG_ERROR_NETWORK;
 
         cJSON *best = modrith_pick_best_version(client, versions);
-        if (!best) { cJSON_Delete(versions); return MCPKG_ERROR_NOT_FOUND; }
+        if (!best) {
+            cJSON_Delete(versions);
+            return MCPKG_ERROR_NOT_FOUND;
+        }
 
         if (modrith_version_to_entry(best, &entry) != 0 || !entry) {
             cJSON_Delete(versions);
@@ -274,13 +322,16 @@ static int resolve_and_install(ModrithApiClient *client,
     /* Resolve required dependencies first */
     for (size_t i = 0; i < entry->dependencies_count; ++i) {
         McPkgDeps *d = entry->dependencies[i];
-        if (!d) continue;
+        if (!d)
+            continue;
 
-        const char *dtype = d->name;           // earlier we stashed dependency_type into name
-        const char *proj  = d->id;             // dep project id
-        const char *verid = d->version;        // if we later add explicit field for version_id, use it here
+        const char *dtype = d->name;
+        const char *proj  = d->id;
+        const char *verid = d->version;
+        // if we later add explicit field for version_id, use it here
 
-        if (!dep_is_required(dtype) || !proj) continue;
+        if (!mcpkg_get_dep_is_required(dtype) || !proj)
+            continue;
 
         /* If we had version_id from JSON, prefer that exact version.  */
         if (verid && *verid) {
@@ -296,7 +347,7 @@ static int resolve_and_install(ModrithApiClient *client,
     }
 
     /* Finally install this entry (upsert + download if needed) */
-    rc = install_single_entry(client, mods_dir, install_db, entry); // takes ownership via upsert
+    rc = mcpkg_get_db_append_single(client, mods_dir, install_db, entry); // takes ownership via upsert
     if (rc != MCPKG_ERROR_SUCCESS) {
         mcpkg_entry_free(entry);
         return rc;
@@ -307,46 +358,75 @@ static int resolve_and_install(ModrithApiClient *client,
 
 
 // GET /v2/project/{id|slug}/version?loaders=[..]&game_versions=[..]
-cJSON *modrith_get_versions_json(ModrithApiClient *client, const char *id_or_slug) {
-    if (!client || !id_or_slug) return NULL;
+cJSON *modrith_get_versions_json(ModrithApiClient *client,
+                                 const char *id_or_slug) {
+    if (!client || !id_or_slug)
+        return NULL;
 
-    const char *loader = getenv(ENV_MC_LOADER); if (!loader) loader = client->mod_loader;
-    const char *mcver  = getenv(ENV_MC_VERSION); if (!mcver)  mcver  = client->mc_version;
+    const char *loader = getenv(ENV_MC_LOADER);
+    if (!loader)
+        loader = mcpkg_modloader_str(client->mod_loader);
 
-    char loaders_q[128]; snprintf(loaders_q, sizeof(loaders_q), "[\"%s\"]", loader ? loader : "");
-    char versions_q[128]; snprintf(versions_q, sizeof(versions_q), "[\"%s\"]", mcver ? mcver : "");
+
+
+    const char *mcver  = getenv(ENV_MC_VERSION);
+    if (!mcver)
+        mcver = client->mc_version;
+
+    char loaders_q[128];
+    snprintf(loaders_q, sizeof(loaders_q),
+             "[\"%s\"]", loader ? loader : ""
+             );
+    char versions_q[128];
+    snprintf(versions_q, sizeof(versions_q),
+             "[\"%s\"]", mcver ? mcver : ""
+             );
 
     CURL *curl = client->client->curl;
     char *loaders_enc  = curl_easy_escape(curl, loaders_q, 0);
     char *versions_enc = curl_easy_escape(curl, versions_q, 0);
     if (!loaders_enc || !versions_enc) {
-        if (loaders_enc) curl_free(loaders_enc);
-        if (versions_enc) curl_free(versions_enc);
+        if (loaders_enc)
+            curl_free(loaders_enc);
+        if (versions_enc)
+            curl_free(versions_enc);
         return NULL;
     }
 
     char url[2048];
     snprintf(url, sizeof(url),
              "https://api.modrinth.com/v2/project/%s/version?loaders=%s&game_versions=%s",
-             id_or_slug, loaders_enc, versions_enc);
+             id_or_slug,
+             loaders_enc,
+             versions_enc);
 
-    curl_free(loaders_enc); curl_free(versions_enc);
+    curl_free(loaders_enc);
+    curl_free(versions_enc);
 
     cJSON *json = api_client_get(client->client, url, NULL);
-    if (!json || !cJSON_IsArray(json)) { if (json) cJSON_Delete(json); return NULL; }
+    if (!json || !cJSON_IsArray(json)) {
+        if (json)
+            cJSON_Delete(json);
+
+        return NULL;
+    }
     return json;
 }
 
 // Choose latest by date_published
-cJSON *modrith_pick_best_version(ModrithApiClient *client, cJSON *versions_array) {
+cJSON *modrith_pick_best_version(ModrithApiClient *client,
+                                 cJSON *versions_array) {
     (void)client;
-    if (!versions_array || !cJSON_IsArray(versions_array)) return NULL;
+
+    if (!versions_array || !cJSON_IsArray(versions_array))
+        return NULL;
     cJSON *best = NULL;
     const char *best_date = NULL;
     cJSON *item;
     cJSON_ArrayForEach(item, versions_array) {
         cJSON *date = cJSON_GetObjectItemCaseSensitive(item, "date_published");
-        if (!cJSON_IsString(date) || !date->valuestring) continue;
+        if (!cJSON_IsString(date) || !date->valuestring)
+            continue;
         if (!best || strcmp(date->valuestring, best_date) > 0) {
             best = item; best_date = date->valuestring;
         }
@@ -356,10 +436,12 @@ cJSON *modrith_pick_best_version(ModrithApiClient *client, cJSON *versions_array
 
 // Convert one version JSON object -> McPkgEntry (includes primary file + minimal deps list)
 int modrith_version_to_entry(cJSON *v, McPkgEntry **out) {
-    if (!v || !out) return 1;
+    if (!v || !out)
+        return 1;
 
     McPkgEntry *e = mcpkg_entry_new();
-    if (!e) return 1;
+    if (!e)
+        return 1;
 
     cJSON *tmp;
 
@@ -403,50 +485,67 @@ int modrith_version_to_entry(cJSON *v, McPkgEntry **out) {
         cJSON *chosen = NULL, *it;
         cJSON_ArrayForEach(it, files) {
             cJSON *primary = cJSON_GetObjectItemCaseSensitive(it, "primary");
-            if (cJSON_IsBool(primary) && cJSON_IsTrue(primary)) { chosen = it; break; }
+            if (cJSON_IsBool(primary) && cJSON_IsTrue(primary)) {
+                chosen = it;
+                break;
+            }
             if (!chosen) chosen = it;
         }
         if (chosen) {
             cJSON *fn   = cJSON_GetObjectItemCaseSensitive(chosen, "filename");
             cJSON *url  = cJSON_GetObjectItemCaseSensitive(chosen, "url");
             cJSON *size = cJSON_GetObjectItemCaseSensitive(chosen, "size");
-            if (cJSON_IsString(fn))   e->file_name = strdup(fn->valuestring);
-            if (cJSON_IsString(url))  e->url = strdup(url->valuestring);
-            if (cJSON_IsNumber(size)) e->size = (uint64_t)size->valuedouble;
+            if (cJSON_IsString(fn))
+                e->file_name = strdup(fn->valuestring);
+            if (cJSON_IsString(url))
+                e->url = strdup(url->valuestring);
+            if (cJSON_IsNumber(size))
+                e->size = (uint64_t)size->valuedouble;
 
             cJSON *hashes = cJSON_GetObjectItemCaseSensitive(chosen, "hashes");
             if (cJSON_IsObject(hashes)) {
                 cJSON *sha512 = cJSON_GetObjectItemCaseSensitive(hashes, "sha512");
                 cJSON *sha1   = cJSON_GetObjectItemCaseSensitive(hashes, "sha1");
-                if (cJSON_IsString(sha512)) e->sha = strdup(sha512->valuestring);
-                else if (cJSON_IsString(sha1)) e->sha = strdup(sha1->valuestring); // fallback
+                if (cJSON_IsString(sha512))
+                    e->sha = strdup(sha512->valuestring);
+                else if (cJSON_IsString(sha1))
+                    e->sha = strdup(sha1->valuestring); // fallback
             }
         }
     }
 
-    // Dependencies (now filling dependency_type + version_id properly)
+    // Dependencies FIXME I dont like this at all (now filling dependency_type + version_id properly)
     cJSON *deps = cJSON_GetObjectItemCaseSensitive(v, "dependencies");
     if (cJSON_IsArray(deps)) {
         size_t cap = (size_t)cJSON_GetArraySize(deps);
         if (cap) {
-            e->dependencies = (McPkgDeps**)calloc(cap, sizeof(McPkgDeps*));
-            if (!e->dependencies) { mcpkg_entry_free(e); return 1; }
+            e->dependencies = (McPkgDeps**)calloc(cap, sizeof(McPkgDeps*)); // MEMORY
+            if (!e->dependencies) {
+                mcpkg_entry_free(e);
+                return 1;
+            }
 
             size_t idx = 0;
             cJSON *dobj;
             cJSON_ArrayForEach(dobj, deps) {
-                if (!cJSON_IsObject(dobj)) continue;
+                if (!cJSON_IsObject(dobj))
+                    continue;
 
                 McPkgDeps *d = mcpkg_deps_new();
-                if (!d) continue;
+                if (!d)
+                    continue;
 
+                // LOOK at this again I am not sure that it is getting these...
                 cJSON *pid   = cJSON_GetObjectItemCaseSensitive(dobj, "project_id");
                 cJSON *vid   = cJSON_GetObjectItemCaseSensitive(dobj, "version_id");
                 cJSON *dtype = cJSON_GetObjectItemCaseSensitive(dobj, "dependency_type");
 
-                if (cJSON_IsString(pid))   d->id = strdup(pid->valuestring);
-                if (cJSON_IsString(vid))   d->version = strdup(vid->valuestring);         // version_id (if present)
-                if (cJSON_IsString(dtype)) d->dependency_type = strdup(dtype->valuestring);
+                if (cJSON_IsString(pid))
+                    d->id = strdup(pid->valuestring);
+                if (cJSON_IsString(vid))
+                    d->version = strdup(vid->valuestring);         // version_id (if present)
+                if (cJSON_IsString(dtype))
+                    d->dependency_type = strdup(dtype->valuestring);
 
                 /* Only keep deps that at least reference a project or a specific version. */
                 if (!d->id && !d->version) {
@@ -471,18 +570,22 @@ int modrith_version_to_entry(cJSON *v, McPkgEntry **out) {
 }
 
 
-int modrith_client_install(ModrithApiClient *client, const char *id_or_slug) {
+MCPKG_ERROR_TYPE modrith_client_install(ModrithApiClient *client,
+                           const char *id_or_slug) {
     if (!client || !id_or_slug)
         return MCPKG_ERROR_PARSE;
 
     const char *cache_root = getenv(ENV_MCPKG_CACHE);
-    if (!cache_root) cache_root = MCPKG_CACHE;
+    if (!cache_root)
+        cache_root = MCPKG_CACHE;
 
     const char *loader = getenv(ENV_MC_LOADER);
-    if (!loader) loader = client->mod_loader;
+    if (!loader)
+        loader = mcpkg_modloader_str(client->mod_loader);
 
     const char *mcver = getenv(ENV_MC_VERSION);
-    if (!mcver) mcver = client->mc_version;
+    if (!mcver)
+        mcver = client->mc_version;
 
     const char *codename = codename_for_version(mcver);
     if (!codename)
@@ -490,16 +593,17 @@ int modrith_client_install(ModrithApiClient *client, const char *id_or_slug) {
 
     // Ensure mods dir exists
     char *mods_dir = NULL;
-    if (mods_dir_path(&mods_dir, cache_root, loader, codename, mcver) != 0)
+    if (mcpkg_fs_mods_dir(&mods_dir, cache_root, loader, codename, mcver) != 0)
         return MCPKG_ERROR_OOM;
-    if (ensure_dir(mods_dir) != 0) {
+
+    if (mcpkg_fs_mkdir(mods_dir) != MCPKG_ERROR_SUCCESS) {
         free(mods_dir);
         return MCPKG_ERROR_FS;
     }
 
     // Packages.install path
     char *install_db = NULL;
-    if (install_db_path(&install_db, cache_root, loader, codename, mcver) != 0) {
+    if (mcpkg_fs_db_dir(&install_db, cache_root, loader, codename, mcver) != 0) {
         free(mods_dir);
         return MCPKG_ERROR_OOM;
     }
@@ -514,15 +618,16 @@ int modrith_client_install(ModrithApiClient *client, const char *id_or_slug) {
     int rc = mcpkg_cache_load(cache, loader, mcver);
     if (rc != MCPKG_ERROR_SUCCESS) {
         fprintf(stderr, "Warning: search cache not available for %s/%s (continuing install anyway)\n", loader, mcver);
+
+        //TODO revisit
         // Not fatal; continue without cache
     }
 
     // Resolve and install recursively starting from the target (uses install_single_entry internally)
     VisitedSet vs = (VisitedSet){0};
     int dep_rc = resolve_and_install(client, id_or_slug, mods_dir, install_db, &vs);
-    visited_free(&vs);
+    mcpkg_visited_free(&vs);
 
-    // Cleanup
     mcpkg_cache_free(cache);
     free(mods_dir);
     free(install_db);

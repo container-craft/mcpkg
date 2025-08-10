@@ -37,7 +37,7 @@ Java_com_mcpkg_jni_Mcpkg_update(JNIEnv *env, jclass cls, jstring jver, jstring j
     const char *ldr = (*env)->GetStringUTFChars(env, jloader, 0);
 
     // Use your existing CLI-equivalent function
-    ModrithApiClient *client = modrith_client_new(ver, ldr);
+    ModrithApiClient *client = modrith_client_new(ver, mcpkg_modloader_from_str(ldr));
     int rc = (client ? modrith_client_update(client) : MCPKG_ERROR_OOM);
     modrith_client_free(client);
 

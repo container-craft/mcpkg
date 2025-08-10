@@ -19,9 +19,11 @@ set(SOURCES
 )
 
 set(HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/mcpkg_visited_set.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_activate.h
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/compat.h
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/mcpkg_export.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/mcpkg_msgpack.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_cache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mcpkg_get.h
