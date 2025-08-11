@@ -1,0 +1,27 @@
+#ifndef MCPKG_FS_ERROR_H
+#define MCPKG_FS_ERROR_H
+
+#include "mcpkg_export.h"
+
+MCPKG_BEGIN_DECLS
+
+    typedef enum {
+        MCPKG_FS_OK = 0,
+        MCPKG_FS_ERR_NULL_PARAM,
+        MCPKG_FS_ERR_NOT_FOUND,
+        MCPKG_FS_ERR_EXISTS,
+        MCPKG_FS_ERR_PERM,
+        MCPKG_FS_ERR_IO,
+        MCPKG_FS_ERR_NOSPC,
+        MCPKG_FS_ERR_RANGE,
+        MCPKG_FS_ERR_OVERFLOW,
+        MCPKG_FS_ERR_OOM,
+        MCPKG_FS_ERR_UNSUPPORTED,
+        MCPKG_FS_ERR_OTHER
+    } MCPKG_FS_ERROR;
+
+/* optional helper */
+MCPKG_API const char *mcpkg_fs_strerror(MCPKG_FS_ERROR e);
+
+MCPKG_END_DECLS
+#endif /* MCPKG_FS_ERROR_H */

@@ -1,0 +1,2 @@
+add_subdirectory(libtst_macros)
+add_subdirectory(libmcpkg_tst)

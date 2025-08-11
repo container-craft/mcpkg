@@ -13,6 +13,10 @@
 #include "mcpkg_export.h"
 MCPKG_BEGIN_DECLS
 
+#ifndef MCPKG_USER_AGENT
+    #define MCPKG_USER_AGENT "m_jimmer/mcpkg/" MCPKG_VERSION
+#endif
+
 typedef struct {
     char  *data;
     size_t size;

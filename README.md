@@ -1,4 +1,20 @@
-## Welcome to mcpkg a Minecraft package management tool
+# Welcome to mcpkg a Minecraft package management tool
+
+### WARNING mcpkg is under heavy development. New modules are being added rapidly and the codebase isn’t fully stable yet. Expect breaking changes as we iterate. 
+ 
+### Current Sprint: *(Aug 10 -- Aug 20th)*
+* **CONTAINER:** Done
+* **FILE SYSTEMS(FS)<:** Done and tested on unix like system's
+* **CRYPTO:** Done
+* **MATH:** Done additions and tests might come as needed  
+* **MC:** Refactor in progress depends on 
+* **PACKAGES:** Refactor in progress depends on mc
+* **API:** Refactor in progress depends on Packages AND PROVIDERS
+* **API:** Refactor in progress depends on Packages AND API(Client) 
+ 
+[Feel free to checkout last sprints commit](https://github.com/container-craft/mcpkg/commit/459e419dc0d5d9b0f8234a7738f6db09b6632a67)
+
+
 mcpkg is a cross-platform package manager for Minecraft mods, inspired by Linux package managers like apt and opkg.
 
 It provides a consistent command-line interface for:
@@ -65,10 +81,13 @@ mcpkg activate -v "$MC_VERSION" -l "$MC_LOADER"
 
 I have only tested this on Debian Sid.
 
+mcpkg uses libsodium for hashing/signing. Require libsodium ≥ 1.0.12 (for crypto_generichash_blake2b and crypto_sign_ed25519).
+
 **Debian Based**
  ```shell
 sudo apt-get -y install git build-essential cmake pkg-config \
-  libzstd-dev libcjson-dev libcurl4-openssl-dev libmsgpack-c-dev
+  libzstd-dev libcjson-dev libcurl4-openssl-dev libmsgpack-c-dev \
+  libsodium-dev
 ```
 
 **Fedora**
@@ -76,7 +95,8 @@ sudo apt-get -y install git build-essential cmake pkg-config \
 ```
 sudo dnf install -y \
   gcc gcc-c++ cmake pkgconfig \
-  zstd-devel cjson-devel libcurl-devel msgpack-devel
+  zstd-devel cjson-devel libcurl-devel msgpack-devel \
+  libsodium-devel
 ```
  
 
@@ -84,12 +104,13 @@ sudo dnf install -y \
 ```shell
 sudo pacman -S --needed \
   base-devel cmake pkgconf \
-  zstd cjson curl msgpack-c
+  zstd cjson curl msgpack-c \
+  libsodium
 ```
 
 **OSX Homebrew**
 ```shell
-brew install cmake zstd cjson curl msgpack avahi
+brew install cmake zstd cjson curl msgpack libsodium
 ```
 
 **Windows**
@@ -98,6 +119,7 @@ The best I can do for you is provide links to the software that is needed. Do yo
 * [libcurl](https://curl.se/windows/)
 * [libcjson](https://github.com/DaveGamble/cJSON/blob/master/README.md)
 * [libmsgpack-c](https://msgpack.org/)
+* [libsodium](https://doc.libsodium.org/installation#pre-built-libraries)
 
 
 ## Building
@@ -115,5 +137,8 @@ cmake --build ../ --target install
 ```
 
 
-
-
+## Testing 
+``` 
+cmake --build ../ -DTST_BUILD=ON -DTST_VERBOSE=ON --target tests \
+./tests/libmcpkg_tst/tst_libmcpkg
+```

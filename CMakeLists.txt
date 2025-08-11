@@ -9,9 +9,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(MCPKG_BUILD_SHARED "Build libmcpkg as a shared" ON)
+option(TST_BUILD "Build tests for modules" ON)
+option(TST_VERBOSE "More output to uart no effect when TST_BUILD is off" OFF)
 
-option(STATIC_BUILD "Build mcpkg as a static binary" OFF)
-option(BUILD_JAVA_BINDINGS "Build Java bindings" OFF)
+
 if (UNIX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     set_property(GLOBAL PROPERTY CMAKE_CXX_STANDARD 23)
@@ -23,18 +25,22 @@ if (UNIX)
     pkg_check_modules(LibCJson REQUIRED libcjson)      # libcjson-dev
     pkg_check_modules(LibCUrl  REQUIRED libcurl )      # libcurl4-openssl-dev
     pkg_check_modules(LibMsgPackC REQUIRED msgpack-c)  # libmsgpack-c-dev
+    pkg_check_modules(LibSodium REQUIRED libsodium)    # libsodium-dev
+
     include(GNUInstallDirs)
     list(APPEND BASE_LIBS
         ${LibMsgPackC_LIBRARIES}
         ${LibZStd_LIBRARIES}
         ${LibCUrl_LIBRARIES}
         ${LibCJson_LIBRARIES}
+        ${LibSodium_LIBRARIES}
     )
 else()
     find_package(Zstd    CONFIG REQUIRED)   # https://facebook.github.io/zstd/
     find_package(CURL    CONFIG REQUIRED)   # https://curl.se/windows/
     find_package(cJSON   CONFIG REQUIRED)   # https://github.com/DaveGamble/cJSON/blob/master/README.md vcpkg provides cJSON as "cJSON"
     find_package(msgpack CONFIG REQUIRED)   # https://msgpack.org/ targets: msgpackc (C)
+    find_package(sodium  CONFIG REQUIRED)   # https://doc.libsodium.org/installation#pre-built-libraries
 
     ## I have no clue if this links
     list(APPEND BASE_LIBS
@@ -42,12 +48,15 @@ else()
         CURL::libcurl
         cjson::cjson
         msgpackc
+        sodium:sodium
     )
 endif()
 
 add_subdirectory(libmcpkg)
-add_subdirectory(mcpkg)
 
-if(BUILD_JAVA_BINDINGS)
-    add_subdirectory(mcpkg-java-bindings/src/main/native/)
+## disabled for now while the backend gets refactored
+# add_subdirectory(mcpkg)
+
+if(TST_BUILD)
+    add_subdirectory(tests)
 endif()
