@@ -6,11 +6,11 @@
 * **CONTAINER:** Done
 * **FILE SYSTEMS(FS)<:** Done and tested on unix like system's
 * **CRYPTO:** Done
-* **MATH:** Done additions and tests might come as needed  
-* **MC:** Refactor in progress depends on 
-* **PACKAGES:** Refactor in progress depends on mc
+* **(BAD)MATH:** Done additions and tests might come as needed  
+* **MC:** Done (pending edge-case tests).
+* **NETOWRKING:** Refactor in progress
+* **PACK:** Refactor in progress depends on mc util finished for major parsing
 * **API:** Refactor in progress depends on Packages AND PROVIDERS
-* **API:** Refactor in progress depends on Packages AND API(Client) 
  
 [Feel free to checkout last sprints commit](https://github.com/container-craft/mcpkg/commit/459e419dc0d5d9b0f8234a7738f6db09b6632a67)
 

@@ -1,8 +1,4 @@
-/* SPDX-License-Identifier: MIT
- *
- * mcpkg_crypto_init.h
- * One-time init/shutdown for mcpkg crypto layer.
- */
+// SPDX-License-Identifier: MIT
 #ifndef MCPKG_CRYPTO_INIT_H
 #define MCPKG_CRYPTO_INIT_H
 #include "crypto/mcpkg_crypto_util.h"

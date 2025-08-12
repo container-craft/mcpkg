@@ -21,11 +21,10 @@ set(MCPKG_SOURCES
   fs/mcpkg_fs_error.c
   fs/mcpkg_fs_std_paths.c
 
-
-
   # providers/modrith_client.c
 
   ## Packages meta-data
+  pack/mcpkg_msgpack.c
   # packages/mcpkg_info_entry.c
   # packages/mcpkg_entry.c
   # packages/mcpkg_deps_entry.c
@@ -51,7 +50,13 @@ set(MCPKG_SOURCES
   crypto/third_party/sha1/sha1.c
 
   ## Minecraft
-  # mc/mcpkg_mc_versions.c
+  mc/mcpkg_mc.c
+  mc/mcpkg_mc_loaders.c
+  mc/mcpkg_mc_loaders_msgpack.c
+  mc/mcpkg_mc_providers.c
+  mc/mcpkg_mc_util.c
+  mc/mcpkg_mc_versions.c
+  mc/mcpkg_mc_versions_msgpack.c
 )
 
 # win/mcpkg_win_compat.c
@@ -84,7 +89,6 @@ set(MCPKG_PUBLIC_HEADERS
   crypto/third_party/sha1/sha1.h
 
 
-
   # Filesystem
   fs/mcpkg_fs_dir.h
   fs/mcpkg_fs_error.h
@@ -92,6 +96,7 @@ set(MCPKG_PUBLIC_HEADERS
   # fs/# mcpkg_fs.h
   fs/mcpkg_fs_util.h
   fs/mcpkg_fs_std_paths.h
+
   ## Providers
   # providers/modrith_client.h
 
@@ -99,11 +104,14 @@ set(MCPKG_PUBLIC_HEADERS
   math/mcpkg_math.h
 
   # Package meta-data
-  # packages/mcpkg_entry.h
-  # packages/mcpkg_msgpack.h
-  # packages/mcpkg_visited_set.h
-  # packages/mcpkg_info_entry.h
-  # packages/mcpkg_deps_entry.h
+  # pack/mcpkg_deps_entry.c
+  # pack/mcpkg_deps_entry.h
+  # pack/mcpkg_entry.c
+  # pack/mcpkg_entry.h
+  # pack/mcpkg_info_entry.c
+  # pack/mcpkg_info_entry.h
+  pack/mcpkg_msgpack.h
+  # pack/mcpkg_visited_set.h
 
   ## lists, maps, so on
   container/mcpkg_map.h
@@ -115,9 +123,13 @@ set(MCPKG_PUBLIC_HEADERS
 
 
   ## Minecraft
-  # mc/mcpkg_mc_providers.h
-  # mc/mcpkg_mc_loaders.h
-  # mc/mcpkg_mc_versions.h
+  mc/mcpkg_mc.h
+  mc/mcpkg_mc_loaders.h
+  mc/mcpkg_mc_loaders_msgpack.h
+  mc/mcpkg_mc_providers.h
+  mc/mcpkg_mc_util.h
+  mc/mcpkg_mc_versions.h
+  mc/mcpkg_mc_versions_msgpack.h
 
   ## McPkg
   mcpkg.h
@@ -175,11 +187,4 @@ if(MCPKG_BUILD_SHARED)
 else()
   install(TARGETS ${TARGET_NAME} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-
-# RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-# install(DIRECTORY ${MCPKG_PUBLIC_INCLUDE_DIR}/
-#         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mcpkg
-#         FILES_MATCHING PATTERN "*.h")
-
-
 

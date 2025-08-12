@@ -101,6 +101,24 @@ do { \
                   ( const char * ) ( test_name ), ( int ) _e_ ); \
     } while ( 0 )
 
+//MCPKG_MP_NO_ERROR
+#define CHECK_OK_PACK(test_name, expr) \
+do { \
+        MCPKG_MP_ERROR _e_ = ( expr ); \
+        CHECK ( _e_ == MCPKG_MP_NO_ERROR , "%s err=%d", \
+              ( const char * ) ( test_name ), ( int ) _e_ ); \
+} while ( 0 )
+
+
+//MCPKG_MC_ERROR
+#define CHECK_OK_MC(test_name, expr) \
+do { \
+        MCPKG_MC_ERROR _e_ = ( expr ); \
+        CHECK ( _e_ == MCPKG_MC_NO_ERROR , "%s err=%d", \
+              ( const char * ) ( test_name ), ( int ) _e_ ); \
+} while ( 0 )
+
+
 
 #ifdef __cplusplus
 }

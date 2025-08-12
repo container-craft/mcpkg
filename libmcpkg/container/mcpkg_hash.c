@@ -20,10 +20,11 @@ static MCPKG_CONTAINER_ERROR rehash(struct McPkgHash *h, size_t new_cap)
     if (!h)
         return MCPKG_CONTAINER_ERR_NULL_PARAM;
 
-    new_cap = mcpkg_next_pow2_size(new_cap);
+    new_cap = mcpkg_math_next_pow2_size(new_cap);
 
     if (table_bytes_est(new_cap, h->value_size, &est))
         return MCPKG_CONTAINER_ERR_OVERFLOW;
+
     if ((unsigned long long)est > h->max_bytes)
         return MCPKG_CONTAINER_ERR_LIMIT;
 
@@ -33,7 +34,8 @@ static MCPKG_CONTAINER_ERROR rehash(struct McPkgHash *h, size_t new_cap)
     if (!keys || !hashes || !states)
         goto oom;
 
-    if (mcpkg_mul_overflow_size(new_cap, h->value_size, &bytes))
+    if (mcpkg_math_mul_overflow_size(new_cap,
+                                     h->value_size, &bytes))
         goto overflow;
 
     values = malloc(bytes);

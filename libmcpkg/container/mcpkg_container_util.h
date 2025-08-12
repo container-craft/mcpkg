@@ -18,7 +18,7 @@ mcpkg_effective_max_elements(size_t max_elements,
 {
 	if (!elem_size)
 		return 0;
-	return mcpkg_min_size(max_elements,
+    return mcpkg_math_min_size(max_elements,
 			      (size_t)(max_bytes /
 				       (unsigned long long)elem_size));
 }

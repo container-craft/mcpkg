@@ -63,7 +63,7 @@ static inline int under_byte_cap(const struct McPkgMap *m, size_t add_nodes)
     uint64_t add = (uint64_t)node_bytes(m) * (uint64_t)add_nodes;
     uint64_t need;
 
-    if (mcpkg_add_overflow_u64(cur, add, &need))
+    if (mcpkg_math_add_overflow_u64(cur, add, &need))
         return 0;
     return need <= m->max_bytes;
 }

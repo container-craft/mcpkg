@@ -15,16 +15,7 @@ typedef struct {
 
 /* ---- SipHash-2-4 (inline) ---- */
 
-static inline uint64_t mcpkg_load64_le(const void *p)
-{
-	uint64_t v;
 
-	memcpy(&v, p, sizeof(v));
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-	v = __builtin_bswap64(v);
-#endif
-	return v;
-}
 
 static inline uint64_t
 mcpkg_siphash24_k(const void *data, size_t len, uint64_t k0, uint64_t k1)
@@ -37,47 +28,47 @@ mcpkg_siphash24_k(const void *data, size_t len, uint64_t k0, uint64_t k1)
 	uint64_t m, b;
 	size_t i = 0;
 
-#define SIPROUND()							\
-	do {								\
-		v0 += v1; v2 += v3;					\
-		v1 = mcpkg_rotl64(v1, 13);			\
-		v3 = mcpkg_rotl64(v3, 16);			\
-		v1 ^= v0; v3 ^= v2;					\
-		v0 = mcpkg_rotl64(v0, 32);			\
-		v2 += v1; v0 += v3;					\
-		v1 = mcpkg_rotl64(v1, 17);			\
-		v3 = mcpkg_rotl64(v3, 21);			\
-		v1 ^= v2; v3 ^= v0;					\
-		v2 = mcpkg_rotl64(v2, 32);			\
-	} while (0)
+#define SIPROUND() \
+    do { \
+        v0 += v1; v2 += v3; \
+        v1 = mcpkg_math_rotl64( v1 , 13 ); \
+        v3 = mcpkg_math_rotl64( v3 , 16 ); \
+        v1 ^= v0; v3 ^= v2; \
+        v0 = mcpkg_math_rotl64( v0 , 32 ); \
+        v2 += v1; v0 += v3; \
+        v1 = mcpkg_math_rotl64( v1 , 17 ); \
+        v3 = mcpkg_math_rotl64( v3 , 21 ); \
+        v1 ^= v2; v3 ^= v0; \
+        v2 = mcpkg_math_rotl64( v2 , 32 ); \
+    } while ( 0 )
 
-	b = ((uint64_t)len) << 56;
+    b = ( ( uint64_t ) len ) << 56;
 
-	for (; i + 8 <= len; i += 8) {
-		m = mcpkg_load64_le(in + i);
+    for ( ; i + 8 <= len; i += 8 ) {
+        m = mcpkg_math_load64_le( in + i );
 		v3 ^= m;
-		SIPROUND(); SIPROUND();
+        SIPROUND ( ) ; SIPROUND ( ) ;
 		v0 ^= m;
 	}
 
 	m = b;
 	switch (len & 7) {
-	case 7: m |= ((uint64_t)in[i + 6]) << 48; /* fallthrough */
-	case 6: m |= ((uint64_t)in[i + 5]) << 40; /* fallthrough */
-	case 5: m |= ((uint64_t)in[i + 4]) << 32; /* fallthrough */
-	case 4: m |= ((uint64_t)in[i + 3]) << 24; /* fallthrough */
-	case 3: m |= ((uint64_t)in[i + 2]) << 16; /* fallthrough */
-	case 2: m |= ((uint64_t)in[i + 1]) << 8;  /* fallthrough */
-	case 1: m |= ((uint64_t)in[i + 0]) << 0;  /* fallthrough */
+    case 7: m |= ( ( uint64_t ) in [ i + 6 ] ) << 48; /* fallthrough */
+    case 6: m |= ( ( uint64_t ) in [ i + 5 ] ) << 40; /* fallthrough */
+    case 5: m |= ( ( uint64_t ) in [ i + 4 ] ) << 32; /* fallthrough */
+    case 4: m |= ( ( uint64_t ) in [ i + 3 ] ) << 24; /* fallthrough */
+    case 3: m |= ( ( uint64_t ) in [ i + 2 ] ) << 16; /* fallthrough */
+    case 2: m |= ( ( uint64_t ) in [ i + 1 ] ) << 8;  /* fallthrough */
+    case 1: m |= ( ( uint64_t ) in [ i + 0 ] ) << 0;  /* fallthrough */
 	default: break;
 	}
 
 	v3 ^= m;
-	SIPROUND(); SIPROUND();
+    SIPROUND ( ) ; SIPROUND ( ) ;
 	v0 ^= m;
 
 	v2 ^= 0xff;
-	SIPROUND(); SIPROUND(); SIPROUND(); SIPROUND();
+    SIPROUND () ; SIPROUND () ; SIPROUND () ; SIPROUND () ;
 
 #undef SIPROUND
 	return v0 ^ v1 ^ v2 ^ v3;

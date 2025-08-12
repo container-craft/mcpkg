@@ -5,41 +5,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "container/mcpkg_hash.h"              /* forward decl + ops */
+#include "container/mcpkg_hash.h"
 #include "math/mcpkg_math.h"
 #include "crypto/mcpkg_sip_hash.h"
 
-/* load factor and probe control */
-#define MCPKG_HASH_LOAD_NUM   82   /* 0.82 */
+#define MCPKG_HASH_LOAD_NUM   82
 #define MCPKG_HASH_LOAD_DEN   100
 #define MCPKG_HASH_MAX_PROBE  64
 
-/* slot states */
 #define HST_EMPTY  0u
 #define HST_FULL   1u
 #define HST_TOMB   2u
 
-/* ***** INTERNAL STRUCT DEFINITION (private) ***** */
+// INTERNAL STRUCT DEFINITION (private)
 struct McPkgHash {
-    char                  **keys;      /* owned C strings */
-    uint64_t              *hashes;     /* cached 64-bit hash */
-    unsigned char         *states;     /* EMPTY/FULL/TOMB */
-    unsigned char         *values;     /* cap * value_size */
-    size_t                 cap;        /* table size (pow2) */
-    size_t                 len;        /* number of FULL slots */
+    char                  **keys;
+    uint64_t              *hashes;
+    unsigned char         *states;
+    unsigned char         *values;
+    size_t                 cap;
+    size_t                 len;
     size_t                 value_size;
-
     McPkgHashOps           ops;
-
-    size_t                 max_pairs;  /* hard cap (entries) */
-    unsigned long long     max_bytes;  /* hard cap (bytes est) */
-
-    /* SipHash key (128-bit) */
+    size_t                 max_pairs;
+    unsigned long long     max_bytes;
+    // SipHash key (128-bit)
     uint64_t               k0;
     uint64_t               k1;
 };
-
-/* ***** tiny helpers (inline) ***** */
 
 static inline char *dup_cstr(const char *s)
 {
@@ -69,7 +62,6 @@ static inline uint64_t key_hash(const struct McPkgHash *h, const char *key)
     return mcpkg_sip_generate(key ? key : "", h->k0, h->k1);
 }
 
-/* Estimated bytes for a table of 'cap' buckets (keys+hashes+states+values). */
 static inline int table_bytes_est(size_t cap, size_t value_size, size_t *out)
 {
     size_t a, b, c, d, sum;
@@ -77,29 +69,29 @@ static inline int table_bytes_est(size_t cap, size_t value_size, size_t *out)
     if (!out)
         return 1;
 
-    if (mcpkg_mul_overflow_size(cap, sizeof(char *), &a))
-        return 1;
-    if (mcpkg_mul_overflow_size(cap, sizeof(uint64_t), &b))
-        return 1;
-    if (mcpkg_mul_overflow_size(cap, sizeof(unsigned char), &c))
-        return 1;
-    if (mcpkg_mul_overflow_size(cap, value_size, &d))
+    if (mcpkg_math_mul_overflow_size(cap, sizeof(char *), &a))
         return 1;
 
-    if (mcpkg_add_overflow_size(a, b, &sum))
+    if (mcpkg_math_mul_overflow_size(cap, sizeof(uint64_t), &b))
         return 1;
-    if (mcpkg_add_overflow_size(sum, c, &sum))
+
+    if (mcpkg_math_mul_overflow_size(cap, sizeof(unsigned char), &c))
         return 1;
-    if (mcpkg_add_overflow_size(sum, d, &sum))
+
+    if (mcpkg_math_mul_overflow_size(cap, value_size, &d))
+        return 1;
+
+    if (mcpkg_math_add_overflow_size(a, b, &sum))
+        return 1;
+
+    if (mcpkg_math_add_overflow_size(sum, c, &sum))
+        return 1;
+
+    if (mcpkg_math_add_overflow_size(sum, d, &sum))
         return 1;
 
     *out = sum;
     return 0;
 }
 
-/* rehash/maybe_grow may stay in the .c, or you can keep them static here.
- * If you keep them here, declare them 'static' (not exposed) and make sure
- * they come AFTER the struct definition (as shown).
- */
-
-#endif /* MCPKG_HASH_P_H */
+#endif // MCPKG_HASH_P_H

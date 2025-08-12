@@ -10,8 +10,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(MCPKG_BUILD_SHARED "Build libmcpkg as a shared" ON)
-option(TST_BUILD "Build tests for modules" ON)
+option(TST_BUILD "Build tests for modules" OFF)
 option(TST_VERBOSE "More output to uart no effect when TST_BUILD is off" OFF)
+option(TST_COMPILE_FAIL "compile time checks that should fail" OFF)
 
 
 if (UNIX)
@@ -20,7 +21,7 @@ if (UNIX)
     add_compile_definitions(_POSIX_C_SOURCE=200809L)
     add_compile_definitions(_GNU_SOURCE)
     find_package(PkgConfig REQUIRED)
-    # PkgConfig Debian Sid, names libzstd.pc json-c.pc libcurl.pc msgpack-c.pc in /usr/lib/${MULTI_ARCH}/pkgconfig
+    # PkgConfig Debian Sid, names libsodium.pc libzstd.pc json-c.pc libcurl.pc msgpack-c.pc in /usr/lib/${MULTI_ARCH}/pkgconfig
     pkg_check_modules(LibZStd  REQUIRED libzstd)       # libzstd-dev
     pkg_check_modules(LibCJson REQUIRED libcjson)      # libcjson-dev
     pkg_check_modules(LibCUrl  REQUIRED libcurl )      # libcurl4-openssl-dev

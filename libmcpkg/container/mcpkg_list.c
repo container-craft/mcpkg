@@ -7,11 +7,6 @@
 
 #include "container/mcpkg_container_util.h"
 
-/*
- * McPkgList: dynamic array of fixed-size elements, by-value storage.
- * Not thread-safe; callers must synchronize.
- */
-
 struct McPkgList {
     unsigned char	*data;              /* cap * elem_size bytes */
     size_t          len;                /* elements in use */
@@ -22,7 +17,6 @@ struct McPkgList {
     unsigned long long	max_bytes;     /* hard cap (bytes) */
 };
 
-/* ----- internal helpers ----- */
 
 static MCPKG_CONTAINER_ERROR grow_to(McPkgList *lst, size_t new_cap)
 {
@@ -47,7 +41,7 @@ static MCPKG_CONTAINER_ERROR grow_to(McPkgList *lst, size_t new_cap)
 	if (new_cap <= lst->cap)
 		return MCPKG_CONTAINER_OK;
 
-	if (mcpkg_mul_overflow_size(new_cap, lst->elem_size, &bytes))
+    if (mcpkg_math_mul_overflow_size(new_cap, lst->elem_size, &bytes))
 		return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 	if ((unsigned long long)bytes > lst->max_bytes)
@@ -62,7 +56,8 @@ static MCPKG_CONTAINER_ERROR grow_to(McPkgList *lst, size_t new_cap)
 	return MCPKG_CONTAINER_OK;
 }
 
-static MCPKG_CONTAINER_ERROR ensure_cap_for(McPkgList *lst, size_t want_len)
+static MCPKG_CONTAINER_ERROR
+ensure_cap_for(McPkgList *lst, size_t want_len)
 {
     size_t new_cap, eff_max; //3
 
@@ -90,8 +85,7 @@ static MCPKG_CONTAINER_ERROR ensure_cap_for(McPkgList *lst, size_t want_len)
 	return grow_to(lst, new_cap);
 }
 
-/* ----- public API ----- */
-
+// API
 McPkgList *mcpkg_list_new(size_t elem_size,
                           const McPkgListOps *ops_or_null,
                           size_t max_elements,
@@ -165,7 +159,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_resize(McPkgList *lst, size_t new_size)
 	if (new_size == lst->len)
 		return MCPKG_CONTAINER_OK;
 
-	/* shrink */
+    // less of you !
 	if (new_size < lst->len) {
 		if (lst->ops.dtor) {
 			for (i = new_size; i < lst->len; i++) {
@@ -177,7 +171,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_resize(McPkgList *lst, size_t new_size)
 		return MCPKG_CONTAINER_OK;
 	}
 
-	/* grow */
+    // more of you !
 	ret = ensure_cap_for(lst, new_size);
 	if (ret != MCPKG_CONTAINER_OK)
 		return ret;
@@ -185,7 +179,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_resize(McPkgList *lst, size_t new_size)
 	old_len = lst->len;
 	add = new_size - old_len;
 
-	if (mcpkg_mul_overflow_size(add, lst->elem_size, &bytes))
+    if (mcpkg_math_mul_overflow_size(add, lst->elem_size, &bytes))
 		return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 	memset(lst->data + old_len * lst->elem_size, 0, bytes);
@@ -200,9 +194,11 @@ MCPKG_CONTAINER_ERROR mcpkg_list_reserve_at_least(McPkgList *lst,
 		return MCPKG_CONTAINER_ERR_NULL_PARAM;
 	if (min_capacity <= lst->cap)
 		return MCPKG_CONTAINER_OK;
-	return grow_to(lst, min_capacity);
+
+    return grow_to(lst, min_capacity);
 }
 
+// FIXME I have thse in other places I think math.
 size_t mcpkg_list_size(const McPkgList *lst)
 {
 	return lst ? lst->len : 0;
@@ -246,7 +242,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_remove_at(McPkgList *lst, size_t index)
 
 	if (index + 1 < lst->len) {
 		tail_elems = lst->len - index - 1;
-		if (mcpkg_mul_overflow_size(tail_elems, lst->elem_size, &bytes))
+        if (mcpkg_math_mul_overflow_size(tail_elems, lst->elem_size, &bytes))
 			return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 		memmove(lst->data + index * lst->elem_size,
@@ -321,7 +317,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_add(McPkgList *lst, size_t index,
 
 	if (index < lst->len) {
 		move_elems = lst->len - index;
-		if (mcpkg_mul_overflow_size(move_elems, lst->elem_size, &bytes))
+        if (mcpkg_math_mul_overflow_size(move_elems, lst->elem_size, &bytes))
 			return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 		memmove(lst->data + (index + 1) * lst->elem_size,
@@ -448,7 +444,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_set_limits(McPkgList *lst,
 	if (lst->len > new_max_elems)
 		return MCPKG_CONTAINER_ERR_LIMIT;
 
-	if (mcpkg_mul_overflow_size(lst->cap, lst->elem_size, &need_bytes))
+    if (mcpkg_math_mul_overflow_size(lst->cap, lst->elem_size, &need_bytes))
 		return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 	if ((unsigned long long)need_bytes > max_bytes)

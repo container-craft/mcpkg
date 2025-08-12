@@ -6,6 +6,8 @@ set(TST_LIBMCPKG_SOURCE
   tst_containers.h
   tst_filesystem.h
   tst_crypto.h
+  tst_pack.h
+  tst_mc.h
 )
 
 add_executable(${TARGET_NAME} ${TST_LIBMCPKG_SOURCE})

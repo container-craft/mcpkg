@@ -24,8 +24,10 @@ void mcpkg_stringlist_free(McPkgStringList *sl)
 {
     if (!sl)
         return;
+
     if (sl->lst)
         mcpkg_list_free(sl->lst);
+
     free(sl);
 }
 
