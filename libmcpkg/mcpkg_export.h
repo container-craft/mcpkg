@@ -9,6 +9,13 @@
 #  define MCPKG_END_DECLS
 #endif
 
+
+#if defined(__GNUC__) || defined(__clang__)
+#define MCPKG_ATTR_UNUSED __attribute__((unused))
+#else
+#define MCPKG_ATTR_UNUSED
+#endif
+
 /* MCPKG_API:
  * Define MCPKG_BUILD_SHARED when compiling the shared lib.
  * Define MCPKG_BUILDING_LIBRARY within the library itself.

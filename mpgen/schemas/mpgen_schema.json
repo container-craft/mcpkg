@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcpkg.dev/schemas/mpgen.schema.json",
+  "title": "mcpkg mpgen schema",
+  "type": "object",
+  "required": ["tag", "version", "unit", "base", "c_struct", "include_prefix", "out_base", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "tag": { "type": "string", "minLength": 1 },
+    "version": { "type": "integer", "minimum": 1 },
+    "unit": { "type": "string", "minLength": 1 },
+    "base": { "type": "string", "minLength": 1 },
+    "c_struct": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+    "include_prefix": { "type": "string", "minLength": 1 },
+    "out_base": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "fields": {
+      "description": "Either a map keyed by integer field-ids, or an array of field objects that include 'key'.",
+      "oneOf": [
+        {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[0-9]+$" },
+          "additionalProperties": { "$ref": "#/$defs/field" }
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/fieldWithKey" }
+        }
+      ]
+    }
+  },
+
+  "$defs": {
+    "scalarType": {
+      "description": "Allowed scalar types.",
+      "enum": ["str", "i32", "u32", "i64", "u64"]
+    },
+
+    "binType": {
+      "description": "Either 'bin' (requires size) or 'bin[NN]'.",
+      "oneOf": [
+        { "const": "bin" },
+        { "type": "string", "pattern": "^bin\\[[1-9][0-9]*\\]$" }
+      ]
+    },
+
+    "structType": {
+      "description": "Struct reference; must be 'struct'. (Angle form disallowed in strict profile.)",
+      "const": "struct"
+    },
+
+    "listType": {
+      "description": "List forms.",
+      "oneOf": [
+        { "const": "list<str>" },
+        { "const": "list<bin>" },
+        { "type": "string", "pattern": "^list<bin\\[[1-9][0-9]*\\]>$" },
+        { "const": "list<struct>" }
+      ]
+    },
+
+    "fieldCommon": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+        "required": { "type": "boolean", "default": false },
+        "comment": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+
+    "field": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldCommon" },
+
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "oneOf": [
+                { "$ref": "#/$defs/scalarType" },
+                { "$ref": "#/$defs/binType" },
+                { "$ref": "#/$defs/structType" },
+                { "$ref": "#/$defs/listType" }
+              ]
+            },
+            "size": { "type": "integer", "minimum": 1 },
+            "ctype": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+            "ref_include": { "type": "string", "minLength": 1 },
+            "ref_sym": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" }
+          },
+          "required": ["type"],
+          "allOf": [
+            { "if": { "properties": { "type": { "const": "bin" } }, "required": ["type"] }, "then": { "required": ["size"] } },
+            { "if": { "properties": { "type": { "type": "string", "pattern": "^bin\\[" } }, "required": ["type"] }, "then": { "not": { "required": ["size"] } } },
+            { "if": { "properties": { "type": { "const": "list<bin>" } }, "required": ["type"] }, "then": { "required": ["size"] } },
+            { "if": { "properties": { "type": { "type": "string", "pattern": "^list<bin\\[" } }, "required": ["type"] }, "then": { "not": { "required": ["size"] } } },
+            { "if": { "properties": { "type": { "const": "struct" } }, "required": ["type"] }, "then": { "required": ["ctype", "ref_include"] } },
+            { "if": { "properties": { "type": { "const": "list<struct>" } }, "required": ["type"] }, "then": { "required": ["ctype", "ref_include"] } }
+          ]
+        },
+
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "key": {},
+            "name": {},
+            "required": {},
+            "comment": {},
+            "type": {},
+            "size": {},
+            "ctype": {},
+            "ref_include": {},
+            "ref_sym": {}
+          }
+        }
+      ]
+    },
+
+    "fieldWithKey": {
+      "allOf": [
+        { "$ref": "#/$defs/field" },
+        {
+          "type": "object",
+          "properties": { "key": { "type": "integer", "minimum": 0 } },
+          "required": ["key"]
+        }
+      ]
+    }
+  }
+}

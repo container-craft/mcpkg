@@ -12,6 +12,8 @@ set(TST_LIBMCPKG_SOURCE
   tst_ledger_roundtrip.h
   tst_mc.h
   tst_net.h
+  tst_threads_basic.h
+  tst_threads_concurrent.h
 )
 
 add_executable(${TARGET_NAME} ${TST_LIBMCPKG_SOURCE})

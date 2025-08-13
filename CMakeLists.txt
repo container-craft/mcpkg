@@ -21,13 +21,14 @@ if (UNIX)
     add_compile_definitions(_POSIX_C_SOURCE=200809L)
     add_compile_definitions(_GNU_SOURCE)
     find_package(PkgConfig REQUIRED)
+    find_package(Threads REQUIRED)
     # PkgConfig Debian Sid, names libsodium.pc libzstd.pc json-c.pc libcurl.pc msgpack-c.pc in /usr/lib/${MULTI_ARCH}/pkgconfig
     pkg_check_modules(LibZStd  REQUIRED libzstd)       # libzstd-dev
     pkg_check_modules(LibCJson REQUIRED libcjson)      # libcjson-dev
     pkg_check_modules(LibCUrl  REQUIRED libcurl )      # libcurl4-openssl-dev
     pkg_check_modules(LibMsgPackC REQUIRED msgpack-c)  # libmsgpack-c-dev
     pkg_check_modules(LibSodium REQUIRED libsodium)    # libsodium-dev
-
+    pkg_check_modules(LibPthread REQUIRED libsodium)    # libsodium-dev
     include(GNUInstallDirs)
     list(APPEND BASE_LIBS
         ${LibMsgPackC_LIBRARIES}
@@ -35,6 +36,7 @@ if (UNIX)
         ${LibCUrl_LIBRARIES}
         ${LibCJson_LIBRARIES}
         ${LibSodium_LIBRARIES}
+        Threads::Threads
     )
 else()
     find_package(Zstd    CONFIG REQUIRED)   # https://facebook.github.io/zstd/
@@ -50,6 +52,7 @@ else()
         cjson::cjson
         msgpackc
         sodium:sodium
+        ws2_32
     )
 endif()
 

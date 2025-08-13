@@ -133,7 +133,7 @@ do { \
 } while ( 0 )
 
 #define CHECK_OKC(test_name, expr) \
-    do { \
+do { \
         MCPKG_CONTAINER_ERROR _e_ = ( expr ); \
         CHECK ( _e_ == MCPKG_CONTAINER_OK, "%s err=%d", \
               ( const char * ) ( test_name ), ( int ) _e_ ); \
@@ -148,7 +148,7 @@ do { \
 
 /* MessagePack */
 #define CHECK_OK_PACK(test_name, expr) \
-        do { \
+do { \
             MCPKG_MP_ERROR _e_ = ( expr ); \
             CHECK ( _e_ == MCPKG_MP_NO_ERROR, "%s err=%d", \
                   ( const char * ) ( test_name ), ( int ) _e_ ); \
@@ -156,19 +156,28 @@ do { \
 
 /* MC */
 #define CHECK_OK_MC(test_name, expr) \
-    do { \
+do { \
             MCPKG_MC_ERROR _e_ = ( expr ); \
             CHECK ( _e_ == MCPKG_MC_NO_ERROR, "%s err=%d", \
                   ( const char * ) ( test_name ), ( int ) _e_ ); \
-    } while ( 0 )
+} while ( 0 )
 
 /* NET */
 #define CHECK_OK_NET(test_name, expr) \
-        do { \
+do { \
             MCPKG_NET_ERROR _e_ = ( expr ); \
             CHECK ( _e_ == MCPKG_NET_NO_ERROR, "%s err=%d", \
                   ( const char * ) ( test_name ), ( int ) _e_ ); \
-    } while ( 0 )
+} while ( 0 )
+
+/* THREADING */
+#define CHECK_OK_THREADS(test_name, expr) \
+do { \
+            MCPKG_THREAD_ERROR _e_ = ( expr ); \
+            CHECK ( _e_ == MCPKG_THREAD_NO_ERROR, "%s err=%d", \
+                ( const char * ) ( test_name ),  ( int ) _e_ ); \
+} while ( 0 )
+
 
 /* -------------------- List size convenience -------------------- */
 /* These avoid accidental passing of McPkgStringList* to mcpkg_list_size(...) */

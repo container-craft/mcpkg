@@ -1,0 +1,30 @@
+# -------- Project-wide AStyle configuration --------
+mode=c
+style=linux                # K&R with Linux switch/case behavior
+
+# Indentation
+indent=tab                 # use tabs for indent
+indent=tab=8               # tab width 8
+indent-switches            # indent 'case' one level under 'switch'
+
+# Pointer / reference placement
+align-pointer=name         # 'char *p' -> '*' binds to the name
+align-reference=name
+
+# Spacing
+pad-header                 # space after 'if', 'for', 'while' -> 'if (x)'
+unpad-paren                 # no spaces just inside parentheses
+pad-oper                   # space around most binary operators
+
+# Braces / control-flow
+attach-closing-while       # 'do { ... } while (cond);' on the same line
+# (style=linux already attaches 'else' and 'catch' in K&R fashion)
+
+# Output / files
+suffix=none                # do not create .orig backup files
+lineend=linux              # use LF line endings
+
+# Safety / defaults
+# convert-tabs              # (not set) keep tabs; do not convert to spaces
+max-code-length=80         # (not set) do not force line wrapping
+# break-after-logical       # (not set) keep your manual wrapping

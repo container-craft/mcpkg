@@ -24,6 +24,16 @@ set(MCPKG_SOURCES
   net/mcpkg_net_client.c
   # net/modrith_client.c
 
+  ## THREADS
+  threads/mcpkg_thread.c
+  threads/mcpkg_thread_util.c
+  threads/posix/mcpkg_thread_posix.c
+  threads/mcpkg_thread_future.c
+  threads/mcpkg_thread_promise.c
+  threads/mcpkg_thread_pool.c
+  threads/mcpkg_thread.c
+  threads/thrid-party/tinycthread/tinycthread.c
+
   ## MessagePack
   mp/mcpkg_mp_util.c
   mp/mcpkg_mp_ledger_attestation.c
@@ -94,7 +104,7 @@ set(MCPKG_PUBLIC_HEADERS
 
   # Crypto
   crypto/mcpkg_crypto.h
-  # crypto/mcpkg_crypto_ledger.h
+  # crypto/old/mcpkg_crypto_ledger.h
   crypto/mcpkg_crypto_hash.h
   crypto/mcpkg_crypto_hex.h
   crypto/mcpkg_crypto_init.h
@@ -119,6 +129,15 @@ set(MCPKG_PUBLIC_HEADERS
   net/mcpkg_net_util.h
   net/mcpkg_net_url.h
   net/mcpkg_net_client.h
+
+  ## THREADING
+  threads/mcpkg_thread.h
+  threads/mcpkg_thread_util.h
+  threads/mcpkg_thread_future.h
+  threads/mcpkg_thread_promise.h
+  threads/mcpkg_thread_pool.h
+  threads/posix/mcpkg_thread_posix.h
+  threads/thrid-party/tinycthread/tinycthread.h
 
   ## Providers
   # providers/modrith_client.h
@@ -172,18 +191,23 @@ set(MCPKG_PUBLIC_HEADERS
   mcpkg.h
   mcpkg_export.h
 )
+
+
+# if (WIN32)
+#   list(APPEND MCPKG_PUBLIC_HEADERS
+#     threads/win/mcpkg_thread_win32.h
+#   )
+#   list(APPEND MCPKG_SOURCES
+#     threads/win/mcpkg_thread_win32.c
+#   )
+# endif()
+
+
 # win/mcpkg_win_compat.h
 set(MCPKG_PRIVATE_HEADERS
-    # API
-    # CONTAINER
     container/mcpkg_str_list_p.h
     container/mcpkg_map_p.h
     container/mcpkg_hash_p.h
-    # FILESYSTEM
-    # MINECRAFT
-    # PACKAGES
-    # PROVIDERS
-    # WIN32
 )
 if (MCPKG_BUILD_SHARED)
     message("BUILDING SHARED")
@@ -193,6 +217,8 @@ if (MCPKG_BUILD_SHARED)
     )
     if(NOT MSVC)
         target_compile_options(${TARGET_NAME} PRIVATE -fvisibility=hidden)
+      else()
+        target_compile_definitions(${TARGET_NAME} PRIVATE _WIN32_WINNT=0x0601 MCPKG_BUILDING_LIBRARY)
     endif()
 else()
     message("BUILDING STATIC")
@@ -208,10 +234,11 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/container
     ${CMAKE_CURRENT_SOURCE_DIR}/crypto
     ${CMAKE_CURRENT_SOURCE_DIR}/fs
+    ${CMAKE_CURRENT_SOURCE_DIR}/net
     ${CMAKE_CURRENT_SOURCE_DIR}/math
     ${CMAKE_CURRENT_SOURCE_DIR}/mc
-    ${CMAKE_CURRENT_SOURCE_DIR}/packages
-    ${CMAKE_CURRENT_SOURCE_DIR}/providers
+    ${CMAKE_CURRENT_SOURCE_DIR}/mp
+    ${CMAKE_CURRENT_SOURCE_DIR}/threads
 )
 
 target_link_libraries(${TARGET_NAME} PRIVATE ${BASE_LIBS})
