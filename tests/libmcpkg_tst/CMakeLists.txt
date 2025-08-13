@@ -8,6 +8,8 @@ set(TST_LIBMCPKG_SOURCE
   tst_filesystem.h
   tst_crypto.h
   tst_pack.h
+  tst_pkg_roundtrip.h
+  tst_ledger_roundtrip.h
   tst_mc.h
   tst_net.h
 )

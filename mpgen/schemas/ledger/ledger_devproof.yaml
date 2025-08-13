@@ -1,12 +1,14 @@
-# mpgen/schemas/ledger/ledger_devproof.yaml
+tag: "ledger.devproof"
 version: 1
 unit: ledger
 base: devproof
 include_prefix: "mp"
+c_struct: "McPkgDevProof"
+out_base: "ledger_devproof"
 
-fields:
-  - { key: 2, name: kind,        type: u32,       required: true,  comment: "MCPKG_DEV_PROOF_*" }
-  - { key: 3, name: proof_data1, type: str,       required: true,  comment: "oauth id / domain / etc." }
-  - { key: 4, name: proof_data2, type: str,       required: false, comment: "optional extra" }
-  - { key: 5, name: has_sig,     type: u32,       required: false, comment: "0/1; present when kind=SIG" }
-  - { key: 6, name: proof_sig,   type: "bin[64]", required: false, comment: "ed25519 signature (optional)" }
+fields: [
+  { key: 2, name: kind,        type: u32,       required: true,  comment: "OAUTH=1,DNS=2,SIG=3" },
+  { key: 3, name: proof_data1, type: str,       required: false },
+  { key: 4, name: proof_data2, type: str,       required: false },
+  { key: 5, name: proof_sig,   type: "bin[64]", required: false }
+]

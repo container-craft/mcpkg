@@ -1,12 +1,16 @@
+tag: "ledger.attestation"
 version: 1
 unit: ledger
 base: attestation
 include_prefix: "mp"
+c_struct: "McPkgAttestation"
+out_base: "ledger_attestation"
 
-fields:
-  - { key: 2, name: pkg_id,           type: str,        required: true }
-  - { key: 3, name: version,          type: str,        required: true }
-  - { key: 4, name: manifest_sha256,  type: "bin[32]",  required: true }
-  - { key: 5, name: signer_pub,       type: "bin[32]",  required: true }
-  - { key: 6, name: signature,        type: "bin[64]",  required: true }
-  - { key: 7, name: ts_ms,            type: i64,        required: true }
+fields: [
+  { key: 2, name: pkg_id,           type: str,        required: true },
+  { key: 3, name: version,          type: str,        required: true },
+  { key: 4, name: manifest_sha256,  type: "bin[32]",  required: true },
+  { key: 5, name: signer_pub,       type: "bin[32]",  required: true },
+  { key: 6, name: signature,        type: "bin[64]",  required: true },
+  { key: 7, name: ts_ms,            type: i64,        required: true }
+]

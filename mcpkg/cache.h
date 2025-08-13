@@ -8,7 +8,8 @@
  * @param package_name The package name to search for.
  * @return 0 on success, or a MCPKG_ERROR_TYPE code on failure.
  */
-int search_cache_command(const char *mc_version, const char *mod_loader, const char *package_name);
+int search_cache_command(const char *mc_version, const char *mod_loader,
+                         const char *package_name);
 
 /**
  * @brief Displays detailed information for a single package from the local cache.
@@ -17,6 +18,7 @@ int search_cache_command(const char *mc_version, const char *mod_loader, const c
  * @param package_name The exact package name to show.
  * @return 0 on success, or a MCPKG_ERROR_TYPE code on failure.
  */
-int show_cache_command(const char *mc_version, const char *mod_loader, const char *package_name);
+int show_cache_command(const char *mc_version, const char *mod_loader,
+                       const char *package_name);
 
 #endif // CACHE_H

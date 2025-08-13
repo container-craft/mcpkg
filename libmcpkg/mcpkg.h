@@ -10,7 +10,7 @@ MCPKG_BEGIN_DECLS
 
 #define ENV_MCPKG_CACHE         "MCPKG_CACHE"
 #ifndef MCPKG_CACHE
-    #define MCPKG_CACHE         "/var/cache/mcpkg/"
+#define MCPKG_CACHE         "/var/cache/mcpkg/"
 #endif
 
 #define ENV_MC_BASE             "MC_BASE"

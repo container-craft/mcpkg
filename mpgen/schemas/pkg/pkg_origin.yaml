@@ -1,10 +1,14 @@
+tag: "pkg.origin"
 version: 1
 unit: pkg
 base: origin
 include_prefix: "mp"
+c_struct: "McPkgOrigin"
+out_base: "pkg_origin"
 
-fields:
-  - { key: 2, name: provider,   type: str, required: true,  comment: "\"modrinth\" | \"curseforge\" | \"hangar\" | \"deb\" | …" }
-  - { key: 3, name: project_id, type: str, required: true,  comment: "provider-specific project id" }
-  - { key: 4, name: version_id, type: str, required: false, comment: "provider-specific version/file id" }
-  - { key: 5, name: source_url, type: str, required: false, comment: "human reference URL (optional)" }
+fields: [
+  { key: 2,  name: provider,   type: str, required: true } ,
+  { key: 3,  name: project_id, type: str, required: true } ,
+  { key: 4,  name: version_id, type: str, required: false },
+  { key: 5,  name: source_url, type: str, required: false }
+]

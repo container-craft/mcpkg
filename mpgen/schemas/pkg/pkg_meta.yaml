@@ -1,42 +1,28 @@
+tag: "pkg.meta"
 version: 1
 unit: pkg
 base: meta
 include_prefix: "mp"
+c_struct: "McPkgCache"
+out_base: "pkg_meta"
 
-fields:
-  # identity
-  - { key: 2,  name: id,           type: str, required: true,  comment: "canonical id" }
-  - { key: 3,  name: slug,         type: str, required: false }
-  - { key: 4,  name: version,      type: str, required: true }
-  - { key: 5,  name: title,        type: str, required: false }
-  - { key: 6,  name: description,  type: str, required: false }
-
-  # links/licensing
-  - { key: 7,  name: license_id,   type: str, required: false, comment: "SPDX id if possible" }
-  - { key: 8,  name: home_page,    type: str, required: false }
-  - { key: 9,  name: source_repo,  type: str, required: false }
-
-  # tags & loaders
-  - { key: 10, name: loaders,      type: "list<str>", required: true,  comment: "must have ≥1 loader" }
-  - { key: 11, name: sections,     type: "list<str>", required: false }
-
-  # config & deps
-  - { key: 12, name: configs,      type: "list<str>", required: false }
-  - { key: 13, name: depends,      type: "list<struct<McPkgPkgDepends>>", required: false,
-        ref_include: "mp/mcpkg_mp_pkg_depends.h", ref_unit: "pkg_depends" }
-
-  # artifact
-  - { key: 14, name: file,         type: "struct<McPkgPkgFile>", required: true,
-        ref_include: "mp/mcpkg_mp_pkg_file.h", ref_unit: "pkg_file" }
-
-  # sides
-  - { key: 15, name: client,       type: i32, required: false, comment: "MCPKG_TRI (UNKNOWN=-1, NO=0, YES=1)" }
-  - { key: 16, name: server,       type: i32, required: false, comment: "MCPKG_TRI (UNKNOWN=-1, NO=0, YES=1)" }
-
-  # origin (provider linkage)
-  - { key: 17, name: origin,       type: "struct<McPkgPkgOrigin>", required: false,
-        ref_include: "mp/mcpkg_mp_pkg_origin.h", ref_unit: "pkg_origin" }
-
-  # internals
-  - { key: 18, name: flags,        type: u32, required: false }
-  - { key: 19, name: schema,       type: u32, required: false, comment: "schema version for meta evolution" }
+fields: [
+  { key: 2,   name: id,          type: str,         required: true },
+  { key: 3 ,  name: slug,        type: str,         required: false },
+  { key: 4 ,  name: version,     type: str,         required: true },
+  { key: 5 ,  name: title,       type: str,         required: false },
+  { key: 6 ,  name: description, type: str,         required: false },
+  { key: 7 ,  name: license_id,  type: str,         required: false },
+  { key: 8 ,  name: home_page,   type: str,         required: false },
+  { key: 9 ,  name: source_repo, type: str,         required: false },
+  { key: 10,  name: loaders,     type: "list<str>", required: true,  comment: ">=1 loader" },
+  { key: 11,  name: sections,    type: "list<str>", required: false },
+  { key: 12,  name: configs,     type: "list<str>", required: false },
+  { key: 13,  name: depends,     type: "list<struct>", ctype: "McPkgDepends", ref_include: "mp/mcpkg_mp_pkg_depends.h", required: false },
+  { key: 14,  name: file,        type: "struct",    ctype: "McPkgFile", ref_include: "mp/mcpkg_mp_pkg_file.h", required: true },
+  { key: 15,  name: client,      type: i32,         required: false, comment: "UNKNOWN=-1,NO=0,YES=1" },
+  { key: 16,  name: server,      type: i32,         required: false, comment: "UNKNOWN=-1,NO=0,YES=1" },
+  { key: 17,  name: origin,      type: "struct",    ctype: "McPkgOrigin", ref_include: "mp/mcpkg_mp_pkg_origin.h", required: false },
+  { key: 18,  name: flags,       type: u32,         required: false },
+  { key: 19,  name: schema,      type: u32,         required: false }
+]

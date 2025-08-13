@@ -15,13 +15,13 @@ MCPKG_BEGIN_DECLS
 
 static inline uint64_t mcpkg_math_load64_le(const void *p)
 {
-    uint64_t v;
+	uint64_t v;
 
-    memcpy(&v, p, sizeof(v));
+	memcpy(&v, p, sizeof(v));
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    v = __builtin_bswap64(v);
+	v = __builtin_bswap64(v);
 #endif
-    return v;
+	return v;
 }
 
 static inline size_t mcpkg_math_min_size(size_t a, size_t b)
@@ -67,7 +67,8 @@ static inline int mcpkg_math_mul_overflow_size(size_t a, size_t b, size_t *out)
 }
 
 
-static inline int mcpkg_math_add_overflow_u64(uint64_t a, uint64_t b, uint64_t *out)
+static inline int mcpkg_math_add_overflow_u64(uint64_t a, uint64_t b,
+                uint64_t *out)
 {
 	if (!out)
 		return 1;
@@ -75,12 +76,13 @@ static inline int mcpkg_math_add_overflow_u64(uint64_t a, uint64_t b, uint64_t *
 	return *out < a;	/* carry => overflow */
 }
 
-static inline int mcpkg_math_mul_overflow_u64(uint64_t a, uint64_t b, uint64_t *out)
+static inline int mcpkg_math_mul_overflow_u64(uint64_t a, uint64_t b,
+                uint64_t *out)
 {
 	if (!out)
 		return 1;
 #if defined(__SIZEOF_INT128__)
-	__uint128_t p = ( (__uint128_t)a ) * ( (__uint128_t)b );
+	__uint128_t p = ((__uint128_t)a) * ((__uint128_t)b);
 	*out = (uint64_t)p;
 	return (p >> 64) != 0;
 #else
@@ -133,11 +135,11 @@ static inline int mcpkg_math_align_up_size(size_t v, size_t align, size_t *out)
 		return 1;
 	if (!align)
 		return (*out = v, 0);
-    if (!mcpkg_math_is_pow2_size(align))
+	if (!mcpkg_math_is_pow2_size(align))
 		return 1;
 
 	add = align - 1;
-    if (mcpkg_math_add_overflow_size(v, add, out))
+	if (mcpkg_math_add_overflow_size(v, add, out))
 		return 1;
 	*out &= ~(align - 1);
 	return 0;
@@ -150,7 +152,7 @@ static inline int mcpkg_math_div_ceil_size(size_t n, size_t d, size_t *out)
 
 	if (!out || !d)
 		return 1;
-    if (mcpkg_math_add_overflow_size(n, d - 1, &t))
+	if (mcpkg_math_add_overflow_size(n, d - 1, &t))
 		return 1;
 	*out = t / d;
 	return 0;

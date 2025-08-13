@@ -42,33 +42,46 @@ mcpkg_siphash24_k(const void *data, size_t len, uint64_t k0, uint64_t k1)
         v2 = mcpkg_math_rotl64( v2 , 32 ); \
     } while ( 0 )
 
-    b = ( ( uint64_t ) len ) << 56;
+	b = ((uint64_t) len) << 56;
 
-    for ( ; i + 8 <= len; i += 8 ) {
-        m = mcpkg_math_load64_le( in + i );
+	for (; i + 8 <= len; i += 8) {
+		m = mcpkg_math_load64_le(in + i);
 		v3 ^= m;
-        SIPROUND ( ) ; SIPROUND ( ) ;
+		SIPROUND() ;
+		SIPROUND() ;
 		v0 ^= m;
 	}
 
 	m = b;
 	switch (len & 7) {
-    case 7: m |= ( ( uint64_t ) in [ i + 6 ] ) << 48; /* fallthrough */
-    case 6: m |= ( ( uint64_t ) in [ i + 5 ] ) << 40; /* fallthrough */
-    case 5: m |= ( ( uint64_t ) in [ i + 4 ] ) << 32; /* fallthrough */
-    case 4: m |= ( ( uint64_t ) in [ i + 3 ] ) << 24; /* fallthrough */
-    case 3: m |= ( ( uint64_t ) in [ i + 2 ] ) << 16; /* fallthrough */
-    case 2: m |= ( ( uint64_t ) in [ i + 1 ] ) << 8;  /* fallthrough */
-    case 1: m |= ( ( uint64_t ) in [ i + 0 ] ) << 0;  /* fallthrough */
-	default: break;
+		case 7:
+			m |= ((uint64_t) in [ i + 6 ]) << 48;     /* fallthrough */
+		case 6:
+			m |= ((uint64_t) in [ i + 5 ]) << 40;     /* fallthrough */
+		case 5:
+			m |= ((uint64_t) in [ i + 4 ]) << 32;     /* fallthrough */
+		case 4:
+			m |= ((uint64_t) in [ i + 3 ]) << 24;     /* fallthrough */
+		case 3:
+			m |= ((uint64_t) in [ i + 2 ]) << 16;     /* fallthrough */
+		case 2:
+			m |= ((uint64_t) in [ i + 1 ]) << 8;      /* fallthrough */
+		case 1:
+			m |= ((uint64_t) in [ i + 0 ]) << 0;      /* fallthrough */
+		default:
+			break;
 	}
 
 	v3 ^= m;
-    SIPROUND ( ) ; SIPROUND ( ) ;
+	SIPROUND() ;
+	SIPROUND() ;
 	v0 ^= m;
 
 	v2 ^= 0xff;
-    SIPROUND () ; SIPROUND () ; SIPROUND () ; SIPROUND () ;
+	SIPROUND() ;
+	SIPROUND() ;
+	SIPROUND() ;
+	SIPROUND() ;
 
 #undef SIPROUND
 	return v0 ^ v1 ^ v2 ^ v3;

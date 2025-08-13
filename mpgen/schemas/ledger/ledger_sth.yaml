@@ -1,11 +1,15 @@
+tag: "ledger.sth"
 version: 1
 unit: ledger
 base: sth
 include_prefix: "mp"
+c_struct: "McPkgSTH"
+out_base: "ledger_sth"
 
-fields:
-  - { key: 2, name: size,  type: i64,       required: true, comment: "leaf count (non-negative)" }
-  - { key: 3, name: root,  type: "bin[32]", required: true }
-  - { key: 4, name: ts_ms, type: i64,       required: true }
-  - { key: 5, name: first, type: i64,       required: true }
-  - { key: 6, name: last,  type: i64,       required: true }
+fields: [
+   { key: 2, name: size,  type: u64,       required: true },
+   { key: 3, name: root,  type: "bin[32]", required: true },
+   { key: 4, name: ts_ms, type: u64,       required: true },
+   { key: 5, name: first, type: u64,       required: true },
+   { key: 6, name: last,  type: u64,       required: true }
+]

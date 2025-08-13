@@ -9,11 +9,11 @@ MCPKG_BEGIN_DECLS
 
 
 typedef enum {
-    MCPKG_MC_PROVIDER_MODRINTH   = 1,
-    MCPKG_MC_PROVIDER_CURSEFORGE = 2,
-    MCPKG_MC_PROVIDER_HANGAR     = 3,
-    MCPKG_MC_PROVIDER_LOCAL      = 4,
-    MCPKG_MC_PROVIDER_UNKNOWN    = 0x7fff
+	MCPKG_MC_PROVIDER_MODRINTH   = 1,
+	MCPKG_MC_PROVIDER_CURSEFORGE = 2,
+	MCPKG_MC_PROVIDER_HANGAR     = 3,
+	MCPKG_MC_PROVIDER_LOCAL      = 4,
+	MCPKG_MC_PROVIDER_UNKNOWN    = 0x7fff
 } MCPKG_MC_PROVIDERS;
 
 // message pack
@@ -29,29 +29,30 @@ typedef enum {
 struct McPkgMcProvider;
 
 struct McPkgMcProviderOps {
-    int (*init)(struct McPkgMcProvider *p);
-    void (*destroy)(struct McPkgMcProvider *p);
-    int (*resolve_download_url)(struct McPkgMcProvider *p,
-                                const char *project,
-                                const char *version,
-                                char **out_url);
-    int (*fetch_packages_index)(struct McPkgMcProvider *p,
-                                const char *mc_version,
-                                const char *loader,
-                                const char *dest_path);
-    int (*is_online)(struct McPkgMcProvider *p);
+	int (*init)(struct McPkgMcProvider *p);
+	void (*destroy)(struct McPkgMcProvider *p);
+	int (*resolve_download_url)(struct McPkgMcProvider *p,
+	                            const char *project,
+	                            const char *version,
+	                            char **out_url);
+	int (*fetch_packages_index)(struct McPkgMcProvider *p,
+	                            const char *mc_version,
+	                            const char *loader,
+	                            const char *dest_path);
+	int (*is_online)(struct McPkgMcProvider *p);
 };
 
 // NOTE: no typedef for struct; PascalCase per your style.
 struct McPkgMcProvider {
-    MCPKG_MC_PROVIDERS                  provider;
-    const char                          *name;          // borrowed
-    const char                          *base_url;      // borrowed unless owns_base_url
-    int                                 online;         // >0 online, 0 offline
-    uint32_t                            flags;          // MCPKG_MC_PROVIDER_F_*
-    const struct McPkgMcProviderOps     *ops;
-    void                                *priv;          // owned by provider
-    uint8_t                             owns_base_url;  // 1 if strdup'ed
+	MCPKG_MC_PROVIDERS                  provider;
+	const char                          *name;          // borrowed
+	const char
+	*base_url;      // borrowed unless owns_base_url
+	int                                 online;         // >0 online, 0 offline
+	uint32_t                            flags;          // MCPKG_MC_PROVIDER_F_*
+	const struct McPkgMcProviderOps     *ops;
+	void                                *priv;          // owned by provider
+	uint8_t                             owns_base_url;  // 1 if strdup'ed
 };
 
 

@@ -26,12 +26,26 @@ set(MCPKG_SOURCES
 
   ## MessagePack
   mp/mcpkg_mp_util.c
-  mp/mcpkg_mp_cache.c
-  mp/mcpkg_mp_depends.c
-  mp/mcpkg_mp_digest.c
-  mp/mcpkg_mp_file.c
-  mp/mcpkg_mp_origin.c
-  # pack/mcpkg_pack_utils.c
+  mp/mcpkg_mp_ledger_attestation.c
+  mp/mcpkg_mp_ledger_audit_node.c
+  mp/mcpkg_mp_ledger_audit_path.c
+  mp/mcpkg_mp_ledger_block.c
+  mp/mcpkg_mp_ledger_consistency.c
+  mp/mcpkg_mp_ledger_delegate.c
+  mp/mcpkg_mp_ledger_devlink.c
+  mp/mcpkg_mp_ledger_devproof.c
+  mp/mcpkg_mp_ledger_devsig.c
+  mp/mcpkg_mp_ledger_hash32.c
+  mp/mcpkg_mp_ledger_revoke.c
+  mp/mcpkg_mp_ledger_reward.c
+  mp/mcpkg_mp_ledger_sth.c
+  mp/mcpkg_mp_ledger_tx.c
+
+  mp/mcpkg_mp_pkg_digest.c
+  mp/mcpkg_mp_pkg_depends.c
+  mp/mcpkg_mp_pkg_file.c
+  mp/mcpkg_mp_pkg_meta.c
+  mp/mcpkg_mp_pkg_origin.c
 
   ## Lists
   container/mcpkg_list.c
@@ -41,7 +55,7 @@ set(MCPKG_SOURCES
 
   # Crypto
   crypto/mcpkg_crypto.c
-  crypto/mcpkg_crypto_ledger.c
+  # crypto/mcpkg_crypto_ledger.c
   crypto/mcpkg_crypto_hash.c
   crypto/mcpkg_crypto_hex.c
   crypto/mcpkg_crypto_init.c
@@ -80,7 +94,7 @@ set(MCPKG_PUBLIC_HEADERS
 
   # Crypto
   crypto/mcpkg_crypto.h
-  crypto/mcpkg_crypto_ledger.h
+  # crypto/mcpkg_crypto_ledger.h
   crypto/mcpkg_crypto_hash.h
   crypto/mcpkg_crypto_hex.h
   crypto/mcpkg_crypto_init.h
@@ -112,14 +126,28 @@ set(MCPKG_PUBLIC_HEADERS
   ## Bad Math
   math/mcpkg_math.h
 
-  # Message Packs
+  # Message Packs(Generated minus the utils)
   mp/mcpkg_mp_util.h
-  mp/mcpkg_mp_digest.h
-  mp/mcpkg_mp_origin.h
-  mp/mcpkg_mp_depends.h
-  mp/mcpkg_mp_file.h
-  mp/mcpkg_mp_cache.h
-  mp/mcpkg_mp_block.h
+  mp/mcpkg_mp_ledger_attestation.h
+  mp/mcpkg_mp_ledger_audit_node.h
+  mp/mcpkg_mp_ledger_audit_path.h
+  mp/mcpkg_mp_ledger_block.h
+  mp/mcpkg_mp_ledger_consistency.h
+  mp/mcpkg_mp_ledger_delegate.h
+  mp/mcpkg_mp_ledger_devlink.h
+  mp/mcpkg_mp_ledger_devproof.h
+  mp/mcpkg_mp_ledger_devsig.h
+  mp/mcpkg_mp_ledger_hash32.h
+  mp/mcpkg_mp_ledger_revoke.h
+  mp/mcpkg_mp_ledger_reward.h
+  mp/mcpkg_mp_ledger_sth.h
+  mp/mcpkg_mp_ledger_tx.h
+  mp/mcpkg_mp_pkg_depends.h
+  mp/mcpkg_mp_pkg_digest.h
+  mp/mcpkg_mp_pkg_file.h
+  mp/mcpkg_mp_pkg_meta.h
+  mp/mcpkg_mp_pkg_origin.h
+  # mp/mcpkg_mp_sig_env.h
 
   # pack/mcpkg_visited_set.h
 

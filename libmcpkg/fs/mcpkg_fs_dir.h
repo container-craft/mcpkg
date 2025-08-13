@@ -16,7 +16,7 @@ MCPKG_API MCPKG_FS_ERROR mcpkg_fs_mkdir_p(const char *path);
  * if overwrite==0, existing files cause ERR_EXISTS.
  */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_cp_dir(const char *src, const char *dst,
-                                         int overwrite);
+                int overwrite);
 
 /* recursively remove directory tree (like rm -rf). */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_rm_r(const char *path);

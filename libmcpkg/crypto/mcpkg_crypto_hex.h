@@ -13,10 +13,10 @@
 
 MCPKG_BEGIN_DECLS
 
-        /* ASCII hex (lower/upper) -> binary.
- * hex must be exactly out_len*2 chars. */
-            MCPKG_API MCPKG_CRYPTO_ERR
-            mcpkg_crypto_hex2bin(const char *hex, uint8_t *out, size_t out_len);
+/* ASCII hex (lower/upper) -> binary.
+* hex must be exactly out_len*2 chars. */
+MCPKG_API MCPKG_CRYPTO_ERR
+mcpkg_crypto_hex2bin(const char *hex, uint8_t *out, size_t out_len);
 
 /* binary -> lowercase hex, NUL-terminated.
  * hex_cap must be >= in_len*2 + 1. */

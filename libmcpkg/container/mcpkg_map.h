@@ -18,9 +18,9 @@ MCPKG_BEGIN_DECLS
 typedef struct McPkgMap McPkgMap;
 
 typedef struct {
-    void (*value_copy)(void *dst, const void *src, void *ctx); /* memcpy */
-    void (*value_dtor)(void *val, void *ctx);                  /* no-op */
-    void *ctx;
+	void (*value_copy)(void *dst, const void *src, void *ctx); /* memcpy */
+	void (*value_dtor)(void *val, void *ctx);                  /* no-op */
+	void *ctx;
 } McPkgMapOps;
 
 /* Create an ordered map; 0 caps = defaults. NULL on failure. */
@@ -46,17 +46,17 @@ mcpkg_map_set_limits(McPkgMap *m, size_t max_pairs,
 
 /* Insert or replace key with *value (dup key if new; copy value). */
 MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_map_set(McPkgMap *m,
-                                              const char *key,
-                                              const void *value);
+                const char *key,
+                const void *value);
 
 /* Copy value for key into *out. */
 MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_map_get(const McPkgMap *m,
-                                              const char *key,
-                                              void *out);
+                const char *key,
+                void *out);
 
 /* Remove key if present (frees key; calls value_dtor). */
 MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_map_remove(McPkgMap *m,
-                                                 const char *key);
+                const char *key);
 
 /* Return 1 if key exists, 0 if not. */
 MCPKG_API int mcpkg_map_contains(const McPkgMap *m, const char *key);
@@ -70,24 +70,24 @@ MCPKG_API int mcpkg_map_contains(const McPkgMap *m, const char *key);
  */
 
 MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_map_iter_begin(const McPkgMap *m,
-                                                     void **iter);
+                void **iter);
 
 MCPKG_API int mcpkg_map_iter_next(const McPkgMap *m, void **iter,
                                   const char **key_out,
                                   void *value_out /*nullable*/);
 
 MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_map_iter_seek(const McPkgMap *m,
-                                                    void **iter,
-                                                    const char *seek_key);
+                void **iter,
+                const char *seek_key);
 
 /* Convenience: first/last element (ordered). */
 MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_map_first(const McPkgMap *m,
-                                                const char **key_out,
-                                                void *value_out /*nullable*/);
+                const char **key_out,
+                void *value_out /*nullable*/);
 
 MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_map_last(const McPkgMap *m,
-                                               const char **key_out,
-                                               void *value_out /*nullable*/);
+                const char **key_out,
+                void *value_out /*nullable*/);
 
 MCPKG_END_DECLS
 #endif /* MCPKG_MAP_H */

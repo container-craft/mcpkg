@@ -1,7 +1,11 @@
+tag: "ledger.hash32"
 version: 1
 unit: ledger
 base: hash32
 include_prefix: "mp"
+c_struct: "McPkgHash32_MP"
+out_base: "ledger_hash32"
 
-fields:
-  - { key: 2, name: hash, type: "bin[32]", required: true }
+fields: [
+  { key: 2, name: bytes, type: "bin[32]", required: true }
+]

@@ -1,8 +1,11 @@
+tag: "pkg.digest"
 version: 1
 unit: pkg
 base: digest
 include_prefix: "mp"
-
-fields:
-  - { key: 2, name: algo, type: u32, required: true,  comment: "MCPKG_DIGEST_* enum (e.g., SHA1=1, SHA256=2, SHA512=3…)" }
-  - { key: 3, name: hex,  type: str, required: true,  comment: "lowercase hex of digest" }
+c_struct: "McPkgDigest"
+out_base: "pkg_digest"
+fields: [
+  { key: 2, name: algo, type: u32, required: true, comment: "MCPKG_DIGEST_SHA1=1,SHA256=2,SHA512=3,BLAKE2B32=4"},
+  { key: 3, name: hex, type: str, required: true}
+]

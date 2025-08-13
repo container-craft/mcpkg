@@ -54,12 +54,12 @@ mcpkg_crypto_md5_file(const char *path, uint8_t out[16]);
  * You can reuse a ctx for multiple messages by calling _reset() then update().
  */
 struct mcpkg_crypto_hash_ctx {
-    uint64_t _flags;
-    uint8_t  _s256[sizeof(uint64_t) * 16];
-    uint8_t  _s512[sizeof(uint64_t) * 32];
-    uint8_t  _b2b [512];
-    uint8_t  _md5 [128];
-    uint8_t  _sha1[128];
+	uint64_t _flags;
+	uint8_t  _s256[sizeof(uint64_t) * 16];
+	uint8_t  _s512[sizeof(uint64_t) * 32];
+	uint8_t  _b2b [512];
+	uint8_t  _md5 [128];
+	uint8_t  _sha1[128];
 };
 
 /* Initialize for a set of algorithms (bitwise OR of MCPKG_HASH_* flags). */

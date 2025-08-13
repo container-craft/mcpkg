@@ -1,9 +1,11 @@
-# mpgen/schemas/ledger/ledger_audit_path.yaml
+tag: "ledger.audit_path"
 version: 1
 unit: ledger
 base: audit_path
 include_prefix: "mp"
+c_struct: "McPkgAuditPath"
+out_base: "ledger_audit_path"
 
-fields:
-  - { key: 2, name: nodes, type: "list<struct<McPkgLedgerAuditNode>>", required: true,
-        ref_include: "mp/mcpkg_mp_ledger_audit_node.h", ref_unit: "ledger_audit_node" }
+fields: [
+  { key: 2, name: nodes, type: "list<struct>", ctype: "McPkgAuditNode", ref_include: "mp/mcpkg_mp_ledger_audit_node.h", required: false }
+]

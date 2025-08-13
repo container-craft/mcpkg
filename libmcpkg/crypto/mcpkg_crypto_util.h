@@ -7,27 +7,27 @@
 
 MCPKG_BEGIN_DECLS
 
-    /* Error codes */
-    typedef enum {
-        MCPKG_CRYPTO_OK              =  0,
-        MCPKG_CRYPTO_ERR_IO          = -1,
-        MCPKG_CRYPTO_ERR_INIT        = -2,
-        MCPKG_CRYPTO_ERR_ARG         = -3,
-        MCPKG_CRYPTO_ERR_NOMEM       = -4,
-        MCPKG_CRYPTO_ERR_PARSE       = -5,
-        MCPKG_CRYPTO_ERR_VERIFY      = -6,
-        MCPKG_CRYPTO_ERR_UNSUPPORTED = -7,
-        MCPKG_CRYPTO_ERR_MISMATCH    = -8
-    } MCPKG_CRYPTO_ERR;
+/* Error codes */
+typedef enum {
+	MCPKG_CRYPTO_OK              =  0,
+	MCPKG_CRYPTO_ERR_IO          = -1,
+	MCPKG_CRYPTO_ERR_INIT        = -2,
+	MCPKG_CRYPTO_ERR_ARG         = -3,
+	MCPKG_CRYPTO_ERR_NOMEM       = -4,
+	MCPKG_CRYPTO_ERR_PARSE       = -5,
+	MCPKG_CRYPTO_ERR_VERIFY      = -6,
+	MCPKG_CRYPTO_ERR_UNSUPPORTED = -7,
+	MCPKG_CRYPTO_ERR_MISMATCH    = -8
+} MCPKG_CRYPTO_ERR;
 
 /* Simple algorithm IDs (informational; not bitmasks) */
 typedef enum {
-    MCPKG_CRYPTO_ALGO_SHA1     = 1,
-    MCPKG_CRYPTO_ALGO_MD5      = 2,
-    MCPKG_CRYPTO_ALGO_SHA256   = 3,
-    MCPKG_CRYPTO_ALGO_SHA512   = 4,
-    MCPKG_CRYPTO_ALGO_BLAKE2B32= 5,
-    MCPKG_CRYPTO_ALGO_ED25519  = 6
+	MCPKG_CRYPTO_ALGO_SHA1     = 1,
+	MCPKG_CRYPTO_ALGO_MD5      = 2,
+	MCPKG_CRYPTO_ALGO_SHA256   = 3,
+	MCPKG_CRYPTO_ALGO_SHA512   = 4,
+	MCPKG_CRYPTO_ALGO_BLAKE2B32 = 5,
+	MCPKG_CRYPTO_ALGO_ED25519  = 6
 } MCPKG_CRYPTO_ALGO_ID;
 
 /* Bitmask capabilities (keep separate from IDs) */

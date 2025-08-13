@@ -1,12 +1,16 @@
+tag: "ledger.revoke"
 version: 1
 unit: ledger
 base: revoke
 include_prefix: "mp"
+c_struct: "McPkgRevoke"
+out_base: "ledger_revoke"
 
-fields:
-  - { key: 2, name: kind,        type: u32,       required: true,  comment: "MCPKG_REVOKE_*" }
-  - { key: 3, name: target_hash, type: "bin[32]", required: false, comment: "when kind=KEY or ATTESTATION" }
-  - { key: 4, name: pkg_id,      type: str,       required: false, comment: "when kind=PACKAGE" }
-  - { key: 5, name: version,     type: str,       required: false, comment: "when kind=PACKAGE" }
-  - { key: 6, name: reason,      type: u32,       required: true,  comment: "MCPKG_REVOKE_REASON" }
-  - { key: 7, name: ts_ms,       type: i64,       required: true }
+fields: [
+  { key: 2, name: kind,        type: u32,       required: true,  comment: "KEY=1,ATTESTATION=2,PACKAGE=3" },
+  { key: 3, name: target_hash, type: "bin[32]", required: false, comment: "for kind=KEY or kind=ATTESTATION" },
+  { key: 4, name: pkg_id,      type: str,       required: false, comment: "only when kind=PACKAGE" },
+  { key: 5, name: version,     type: str,       required: false, comment: "only when kind=PACKAGE" },
+  { key: 6, name: reason,      type: u32,       required: true,  comment: "COMPROMISE=1,SUPERSEDED=2,POLICY=3" },
+  { key: 7, name: ts_ms,       type: i64,       required: true }
+]

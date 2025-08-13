@@ -1,10 +1,14 @@
+tag: "pkg.depends"
 version: 1
 unit: pkg
 base: depends
 include_prefix: "mp"
+c_struct: "McPkgDepends"
+out_base: "pkg_depends"
 
-fields:
-  - { key: 2, name: id,            type: str, required: true,  comment: "canonical package/mod id" }
-  - { key: 3, name: version_range, type: str, required: true,  comment: "semver range, e.g. ^1.2.3 or >=1.20,<1.21" }
-  - { key: 4, name: kind,          type: u32, required: true,  comment: "MCPKG_DEP_KIND (REQUIRED=0, OPTIONAL=1, INCOMPATIBLE=2, EMBEDDED=3)" }
-  - { key: 5, name: side,          type: i32, required: false, comment: "MCPKG_TRI (UNKNOWN=-1, NO=0, YES=1)" }
+fields: [
+  { key: 2, name: id,            type: str, required: true },
+  { key: 3, name: version_range, type: str, required: true },
+  { key: 4, name: kind,          type: u32, required: true, comment: "REQUIRED=0,OPTIONAL=1,INCOMPATIBLE=2,EMBEDDED=3" },
+  { key: 5, name: side,          type: i32, required: false, comment: "UNKNOWN=-1,NO=0,YES=1" }
+]

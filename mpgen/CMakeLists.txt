@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 project(mcpkg-mpgen VERSION 0.1.0 LANGUAGES NONE)
 
 # Where to place generated files (headers and sources)
-set(MPGEN_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen" CACHE PATH "mpgen output dir")
+
+## uncomment to get a bunch of debugging.
+# set(ENV{MPGEN_DEBUG} 3)
+
 
 # Python 3 is required to run the generator
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -45,7 +48,7 @@ add_custom_command(
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/mpgen.py"
             --schemas ${MPGEN_SCHEMAS}
             --templates "${CMAKE_CURRENT_SOURCE_DIR}/templates"
-            --out "${MPGEN_OUT_DIR}"
+            --out "${libmcpkg_SOURCE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E touch "${MPGEN_OUT_DIR}/.stamp"
     DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/mpgen.py"
@@ -64,12 +67,3 @@ add_custom_target(mpgen_generate ALL
 add_library(mcpkg_mpgen_headers INTERFACE)
 add_dependencies(mcpkg_mpgen_headers mpgen_generate)
 target_include_directories(mcpkg_mpgen_headers INTERFACE "${MPGEN_OUT_DIR}")
-
-# (Optional) If you want to also compile generated .c here, you can glob them.
-# This is off by default since files may not exist at configure time.
-# Enable if you prefer a self-contained target:
-#
-# file(GLOB_RECURSE MPGEN_GEN_C CONFIGURE_DEPENDS "${MPGEN_OUT_DIR}/*.c")
-# add_library(mcpkg_mpgen_objs OBJECT ${MPGEN_GEN_C})
-# add_dependencies(mcpkg_mpgen_objs mpgen_generate)
-# target_include_directories(mcpkg_mpgen_objs PRIVATE "${MPGEN_OUT_DIR}")

@@ -15,27 +15,27 @@ MCPKG_API MCPKG_FS_ERROR mcpkg_fs_unlink(const char *path);
 
 /* copy file bytes src→dst. if overwrite==0 and dst exists, ERR_EXISTS. */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_cp_file(const char *src, const char *dst,
-                                          int overwrite);
+                int overwrite);
 
 /* read whole file into malloc'd buffer; binary-safe. */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_read_all(const char *path,
-                                           unsigned char **buf_out,
-                                           size_t *size_out);
+                unsigned char **buf_out,
+                size_t *size_out);
 
 /* write whole buffer to path (overwrite: 0=O_EXCL, 1=truncate/replace). */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_write_all(const char *path,
-                                            const void *data, size_t size,
-                                            int overwrite);
+                const void *data, size_t size,
+                int overwrite);
 
 /* Zstd: compress buffer → file (level typically 1..22). */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_write_zstd(const char *path,
-                                             const void *data, size_t size,
-                                             int level);
+                const void *data, size_t size,
+                int level);
 
 /* Zstd: read+decompress entire file → malloc'd buffer. */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_read_zstd(const char *path,
-                                            unsigned char **buf_out,
-                                            size_t *size_out);
+                unsigned char **buf_out,
+                size_t *size_out);
 
 /* Create/replace symlink (POSIX). On Windows returns UNSUPPORTED. */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_ln_sf(const char *target,
@@ -49,8 +49,8 @@ MCPKG_API MCPKG_FS_ERROR mcpkg_fs_ln_sf(const char *target,
  * On Windows returns UNSUPPORTED (unless you add a reparse-point impl).
  */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_link_target(const char *link_path,
-                                              char *buffer, size_t buf_size,
-                                              size_t *out_len);
+                char *buffer, size_t buf_size,
+                size_t *out_len);
 
 /* Return 1 if an existing regular file, 0 if not, <0 on error. */
 MCPKG_API int mcpkg_fs_file_exists(const char *path);

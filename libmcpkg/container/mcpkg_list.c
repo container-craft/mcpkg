@@ -8,13 +8,13 @@
 #include "container/mcpkg_container_util.h"
 
 struct McPkgList {
-    unsigned char	*data;              /* cap * elem_size bytes */
-    size_t          len;                /* elements in use */
-    size_t          cap;                /* capacity (elements) */
-    size_t          elem_size;          /* bytes per element */
-    McPkgListOps    ops;                /* copy/dtor/equals/ctx */
-    size_t          max_elements;       /* hard cap (count) */
-    unsigned long long	max_bytes;     /* hard cap (bytes) */
+	unsigned char	*data;              /* cap * elem_size bytes */
+	size_t          len;                /* elements in use */
+	size_t          cap;                /* capacity (elements) */
+	size_t          elem_size;          /* bytes per element */
+	McPkgListOps    ops;                /* copy/dtor/equals/ctx */
+	size_t          max_elements;       /* hard cap (count) */
+	unsigned long long	max_bytes;     /* hard cap (bytes) */
 };
 
 
@@ -30,8 +30,8 @@ static MCPKG_CONTAINER_ERROR grow_to(McPkgList *lst, size_t new_cap)
 		return MCPKG_CONTAINER_OK;
 
 	eff_max = mcpkg_effective_max_elements(lst->max_elements,
-					       lst->max_bytes,
-					       lst->elem_size);
+	                                       lst->max_bytes,
+	                                       lst->elem_size);
 	if (!eff_max)
 		return MCPKG_CONTAINER_ERR_LIMIT;
 
@@ -41,7 +41,7 @@ static MCPKG_CONTAINER_ERROR grow_to(McPkgList *lst, size_t new_cap)
 	if (new_cap <= lst->cap)
 		return MCPKG_CONTAINER_OK;
 
-    if (mcpkg_math_mul_overflow_size(new_cap, lst->elem_size, &bytes))
+	if (mcpkg_math_mul_overflow_size(new_cap, lst->elem_size, &bytes))
 		return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 	if ((unsigned long long)bytes > lst->max_bytes)
@@ -59,7 +59,7 @@ static MCPKG_CONTAINER_ERROR grow_to(McPkgList *lst, size_t new_cap)
 static MCPKG_CONTAINER_ERROR
 ensure_cap_for(McPkgList *lst, size_t want_len)
 {
-    size_t new_cap, eff_max; //3
+	size_t new_cap, eff_max; //3
 
 	if (!lst)
 		return MCPKG_CONTAINER_ERR_NULL_PARAM;
@@ -74,8 +74,8 @@ ensure_cap_for(McPkgList *lst, size_t want_len)
 	new_cap = new_cap < want_len ? want_len : new_cap;
 
 	eff_max = mcpkg_effective_max_elements(lst->max_elements,
-					       lst->max_bytes,
-					       lst->elem_size);
+	                                       lst->max_bytes,
+	                                       lst->elem_size);
 	if (!eff_max)
 		return MCPKG_CONTAINER_ERR_LIMIT;
 
@@ -109,12 +109,12 @@ McPkgList *mcpkg_list_new(size_t elem_size,
 		memset(&lst->ops, 0, sizeof(lst->ops));
 
 	lst->max_elements = max_elements ? max_elements
-					 : MCPKG_CONTAINER_MAX_ELEMENTS;
+	                    : MCPKG_CONTAINER_MAX_ELEMENTS;
 	lst->max_bytes = max_bytes ? max_bytes : MCPKG_CONTAINER_MAX_BYTES;
 
 	eff = mcpkg_effective_max_elements(lst->max_elements,
-					   lst->max_bytes,
-					   lst->elem_size);
+	                                   lst->max_bytes,
+	                                   lst->elem_size);
 	if (!eff) {
 		free(lst);
 		return NULL;
@@ -159,7 +159,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_resize(McPkgList *lst, size_t new_size)
 	if (new_size == lst->len)
 		return MCPKG_CONTAINER_OK;
 
-    // less of you !
+	// less of you !
 	if (new_size < lst->len) {
 		if (lst->ops.dtor) {
 			for (i = new_size; i < lst->len; i++) {
@@ -171,7 +171,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_resize(McPkgList *lst, size_t new_size)
 		return MCPKG_CONTAINER_OK;
 	}
 
-    // more of you !
+	// more of you !
 	ret = ensure_cap_for(lst, new_size);
 	if (ret != MCPKG_CONTAINER_OK)
 		return ret;
@@ -179,7 +179,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_resize(McPkgList *lst, size_t new_size)
 	old_len = lst->len;
 	add = new_size - old_len;
 
-    if (mcpkg_math_mul_overflow_size(add, lst->elem_size, &bytes))
+	if (mcpkg_math_mul_overflow_size(add, lst->elem_size, &bytes))
 		return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 	memset(lst->data + old_len * lst->elem_size, 0, bytes);
@@ -188,14 +188,14 @@ MCPKG_CONTAINER_ERROR mcpkg_list_resize(McPkgList *lst, size_t new_size)
 }
 
 MCPKG_CONTAINER_ERROR mcpkg_list_reserve_at_least(McPkgList *lst,
-						  size_t min_capacity)
+                size_t min_capacity)
 {
 	if (!lst)
 		return MCPKG_CONTAINER_ERR_NULL_PARAM;
 	if (min_capacity <= lst->cap)
 		return MCPKG_CONTAINER_OK;
 
-    return grow_to(lst, min_capacity);
+	return grow_to(lst, min_capacity);
 }
 
 // FIXME I have thse in other places I think math.
@@ -242,12 +242,12 @@ MCPKG_CONTAINER_ERROR mcpkg_list_remove_at(McPkgList *lst, size_t index)
 
 	if (index + 1 < lst->len) {
 		tail_elems = lst->len - index - 1;
-        if (mcpkg_math_mul_overflow_size(tail_elems, lst->elem_size, &bytes))
+		if (mcpkg_math_mul_overflow_size(tail_elems, lst->elem_size, &bytes))
 			return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 		memmove(lst->data + index * lst->elem_size,
-			lst->data + (index + 1) * lst->elem_size,
-			bytes);
+		        lst->data + (index + 1) * lst->elem_size,
+		        bytes);
 	}
 
 	lst->len--;
@@ -261,13 +261,13 @@ MCPKG_CONTAINER_ERROR mcpkg_list_push(McPkgList *lst, const void *elem)
 	if (!lst || !elem)
 		return MCPKG_CONTAINER_ERR_NULL_PARAM;
 
-    ret = ensure_cap_for(lst, lst->len + 1); //2
+	ret = ensure_cap_for(lst, lst->len + 1); //2
 	if (ret != MCPKG_CONTAINER_OK)
 		return ret;
 
 	if (lst->ops.copy) {
 		lst->ops.copy(lst->data + lst->len * lst->elem_size, elem,
-			      lst->ops.ctx);
+		              lst->ops.ctx);
 	} else {
 		memcpy(lst->data + lst->len * lst->elem_size, elem,
 		       lst->elem_size);
@@ -301,7 +301,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_pop(McPkgList *lst, void *out)
 }
 
 MCPKG_CONTAINER_ERROR mcpkg_list_add(McPkgList *lst, size_t index,
-				     const void *elem)
+                                     const void *elem)
 {
 	size_t move_elems, bytes;
 	MCPKG_CONTAINER_ERROR ret;
@@ -317,17 +317,17 @@ MCPKG_CONTAINER_ERROR mcpkg_list_add(McPkgList *lst, size_t index,
 
 	if (index < lst->len) {
 		move_elems = lst->len - index;
-        if (mcpkg_math_mul_overflow_size(move_elems, lst->elem_size, &bytes))
+		if (mcpkg_math_mul_overflow_size(move_elems, lst->elem_size, &bytes))
 			return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 		memmove(lst->data + (index + 1) * lst->elem_size,
-			lst->data + index * lst->elem_size,
-			bytes);
+		        lst->data + index * lst->elem_size,
+		        bytes);
 	}
 
 	if (lst->ops.copy) {
 		lst->ops.copy(lst->data + index * lst->elem_size, elem,
-			      lst->ops.ctx);
+		              lst->ops.ctx);
 	} else {
 		memcpy(lst->data + index * lst->elem_size, elem,
 		       lst->elem_size);
@@ -338,7 +338,7 @@ MCPKG_CONTAINER_ERROR mcpkg_list_add(McPkgList *lst, size_t index,
 }
 
 MCPKG_CONTAINER_ERROR mcpkg_list_at(const McPkgList *lst, size_t index,
-				    void *out)
+                                    void *out)
 {
 	if (!lst || !out)
 		return MCPKG_CONTAINER_ERR_NULL_PARAM;
@@ -413,7 +413,7 @@ int mcpkg_list_index_of(const McPkgList *lst, const void *needle)
 }
 
 void mcpkg_list_get_limits(const McPkgList *lst, size_t *max_elements,
-			   unsigned long long *max_bytes)
+                           unsigned long long *max_bytes)
 {
 	if (!lst) {
 		if (max_elements)
@@ -430,8 +430,8 @@ void mcpkg_list_get_limits(const McPkgList *lst, size_t *max_elements,
 }
 
 MCPKG_CONTAINER_ERROR mcpkg_list_set_limits(McPkgList *lst,
-					    size_t max_elements,
-					    unsigned long long max_bytes)
+                size_t max_elements,
+                unsigned long long max_bytes)
 {
 	size_t new_max_elems, need_bytes;
 
@@ -444,14 +444,14 @@ MCPKG_CONTAINER_ERROR mcpkg_list_set_limits(McPkgList *lst,
 	if (lst->len > new_max_elems)
 		return MCPKG_CONTAINER_ERR_LIMIT;
 
-    if (mcpkg_math_mul_overflow_size(lst->cap, lst->elem_size, &need_bytes))
+	if (mcpkg_math_mul_overflow_size(lst->cap, lst->elem_size, &need_bytes))
 		return MCPKG_CONTAINER_ERR_OVERFLOW;
 
 	if ((unsigned long long)need_bytes > max_bytes)
 		return MCPKG_CONTAINER_ERR_LIMIT;
 
 	if (!mcpkg_effective_max_elements(new_max_elems, max_bytes,
-					  lst->elem_size))
+	                                  lst->elem_size))
 		return MCPKG_CONTAINER_ERR_LIMIT;
 
 	lst->max_elements = new_max_elems;

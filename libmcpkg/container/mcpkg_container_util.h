@@ -13,14 +13,14 @@ MCPKG_BEGIN_DECLS
  */
 static inline size_t
 mcpkg_effective_max_elements(size_t max_elements,
-			     unsigned long long max_bytes,
-			     size_t elem_size)
+                             unsigned long long max_bytes,
+                             size_t elem_size)
 {
 	if (!elem_size)
 		return 0;
-    return mcpkg_math_min_size(max_elements,
-			      (size_t)(max_bytes /
-				       (unsigned long long)elem_size));
+	return mcpkg_math_min_size(max_elements,
+	                           (size_t)(max_bytes /
+	                                    (unsigned long long)elem_size));
 }
 
 MCPKG_END_DECLS

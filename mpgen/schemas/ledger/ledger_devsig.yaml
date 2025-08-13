@@ -1,10 +1,13 @@
-# mpgen/schemas/ledger/ledger_devsig.yaml
+tag: "ledger.devsig"
 version: 1
 unit: ledger
 base: devsig
 include_prefix: "mp"
+c_struct: "McPkgDevSig"
+out_base: "ledger_devsig"
 
-fields:
-  - { key: 2, name: dev_pub,          type: "bin[32]", required: true }
-  - { key: 3, name: manifest_sha256,  type: "bin[32]", required: true }
-  - { key: 4, name: sig_by_dev,       type: "bin[64]", required: true }
+fields: [
+  { key: 2, name: dev_pub,         type: "bin[32]", required: true },
+  { key: 3, name: manifest_sha256, type: "bin[32]", required: true },
+  { key: 4, name: sig_by_dev,      type: "bin[64]", required: true }
+]

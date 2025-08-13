@@ -8,14 +8,13 @@
 
 MCPKG_BEGIN_DECLS
 
-    typedef enum
-{
-    MCPKG_FS_TMP = 0,     /* Linux: /tmp            | Windows: %TEMP% (GetTempPath) */
-    MCPKG_FS_HOME,        /* Linux: $HOME           | Windows: %USERPROFILE% */
-    MCPKG_FS_CONFIG,      /* Linux: /etc            | Windows: %PROGRAMDATA% */
-    MCPKG_FS_SHARE,       /* Linux: /usr/share      | Windows: %PROGRAMDATA% */
-    MCPKG_FS_CACHE,       /* Linux: /var/cache      | Windows: %LOCALAPPDATA% */
-    MCPKG_FS_LOCATION_UNKNOWN
+typedef enum {
+	MCPKG_FS_TMP = 0,     /* Linux: /tmp            | Windows: %TEMP% (GetTempPath) */
+	MCPKG_FS_HOME,        /* Linux: $HOME           | Windows: %USERPROFILE% */
+	MCPKG_FS_CONFIG,      /* Linux: /etc            | Windows: %PROGRAMDATA% */
+	MCPKG_FS_SHARE,       /* Linux: /usr/share      | Windows: %PROGRAMDATA% */
+	MCPKG_FS_CACHE,       /* Linux: /var/cache      | Windows: %LOCALAPPDATA% */
+	MCPKG_FS_LOCATION_UNKNOWN
 } MCPKG_FS_LOCATION;
 
 /* Append default search locations for 'location' into 'out' (like Qt's standardLocations).

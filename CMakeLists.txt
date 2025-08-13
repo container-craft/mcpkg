@@ -10,10 +10,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(MCPKG_BUILD_SHARED "Build libmcpkg as a shared" ON)
-option(TST_BUILD "Build tests for modules" OFF)
+option(TST_BUILD "Build tests for modules" ON)
 option(TST_VERBOSE "More output to uart no effect when TST_BUILD is off" OFF)
 option(TST_COMPILE_FAIL "compile time checks that should fail" OFF)
-
+option(MCPGEN "option to generate the API message pack code" OFF)
 
 if (UNIX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -54,8 +54,9 @@ else()
 endif()
 
 
-
-add_subdirectory(mpgen)
+if (MCPGEN)
+    add_subdirectory(mpgen)
+endif()
 
 add_subdirectory(libmcpkg)
 

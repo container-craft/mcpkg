@@ -1,13 +1,15 @@
-# mpgen/schemas/ledger/ledger_devlink.yaml
+tag: "ledger.devlink"
 version: 1
 unit: ledger
 base: devlink
 include_prefix: "mp"
+c_struct: "McPkgDevLink"
+out_base: "ledger_devlink"
 
-fields:
-  - { key: 2, name: provider,   type: str,        required: true,  comment: "\"modrinth\"|\"curseforge\"|\"deb\"|…" }
-  - { key: 3, name: project_id, type: str,        required: true }
-  - { key: 4, name: dev_pub,    type: "bin[32]",  required: true,  comment: "ed25519 pubkey" }
-  - { key: 5, name: proof,      type: "struct<McPkgLedgerDevproof>", required: true,
-        ref_include: "mp/mcpkg_mp_ledger_devproof.h", ref_unit: "ledger_devproof" }
-  - { key: 6, name: ts_ms,      type: i64,        required: true,  comment: "unix ms (non-negative)" }
+fields: [
+  { key: 2,  name: provider,   type: str,       required: true },
+  { key: 3,  name: project_id, type: str,       required: true },
+  { key: 4,  name: dev_pub,    type: "bin[32]", required: true },
+  { key: 5,  name: proof,      type: "struct",  ctype: "McPkgDevProof", ref_include: "mp/mcpkg_mp_ledger_devproof.h", required: false },
+  { key: 6,  name: ts_ms,      type: i64,       required: true }
+]

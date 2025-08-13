@@ -1,8 +1,12 @@
+tag: "ledger.audit_node"
 version: 1
 unit: ledger
 base: audit_node
 include_prefix: "mp"
+c_struct: "McPkgAuditNode"
+out_base: "ledger_audit_node"
 
-fields:
-  - { key: 2, name: sibling,  type: "bin[32]", required: true }
-  - { key: 3, name: is_right, type: u32,       required: true, comment: "0=left sibling, 1=right sibling" }
+fields: [
+  { key: 2,  name: sibling,  type: "bin[32]", required: true },
+  { key: 3, name: is_right, type: u32,       required: true, comment: "0=left sibling, 1=right sibling" }
+]
