@@ -70,6 +70,11 @@ MCPKG_API MCPKG_CONTAINER_ERROR mcpkg_hash_pop(McPkgHash *h,
 /* Return 1 if key exists, 0 if not. */
 MCPKG_API int mcpkg_hash_contains(const McPkgHash *h, const char *key);
 
+
+
+
+
+
 /*
  * Unordered iteration:
  *   size_t it;

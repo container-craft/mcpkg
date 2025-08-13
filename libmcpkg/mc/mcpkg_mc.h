@@ -14,7 +14,6 @@
 
 // Container submodules
 #include "container/mcpkg_list.h"
-#include "container/mcpkg_str_list.h"
 
 MCPKG_BEGIN_DECLS
 

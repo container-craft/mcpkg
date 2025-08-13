@@ -1,0 +1,7 @@
+version: 1
+unit: ledger
+base: hash32
+include_prefix: "mp"
+
+fields:
+  - { key: 2, name: hash, type: "bin[32]", required: true }

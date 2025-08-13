@@ -1,0 +1,9 @@
+version: 1
+unit: ledger
+base: consistency
+include_prefix: "mp"
+
+fields:
+  - { key: 2, name: nodes, type: "list<struct<McPkgLedgerHash32>>", required: true,
+        ref_include: "mp/mcpkg_mp_ledger_hash32.h", ref_unit: "ledger_hash32",
+        comment: "consistency proof node list (CT algorithm)" }

@@ -1,0 +1,11 @@
+version: 1
+unit: ledger
+base: reward
+include_prefix: "mp"
+
+fields:
+  - { key: 2, name: to_pub,    type: "bin[32]", required: true }
+  - { key: 3, name: amount,    type: i64,       required: true, comment: "non-negative" }
+  - { key: 4, name: policy_id, type: str,       required: true }
+  - { key: 5, name: att_ref,   type: i64,       required: true }
+  - { key: 6, name: ts_ms,     type: i64,       required: true }

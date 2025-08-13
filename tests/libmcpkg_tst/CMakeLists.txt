@@ -1,6 +1,7 @@
 set(TARGET_NAME tst_libmcpkg)
 project(${TARGET_NAME} LANGUAGES C)
 
+# templete -> tst_tmp.h
 set(TST_LIBMCPKG_SOURCE
   main.c
   tst_containers.h
@@ -8,6 +9,7 @@ set(TST_LIBMCPKG_SOURCE
   tst_crypto.h
   tst_pack.h
   tst_mc.h
+  tst_net.h
 )
 
 add_executable(${TARGET_NAME} ${TST_LIBMCPKG_SOURCE})

@@ -118,7 +118,13 @@ do { \
               ( const char * ) ( test_name ), ( int ) _e_ ); \
 } while ( 0 )
 
-
+//MCPKG_NET_ERROR
+#define CHECK_OK_NET(test_name, expr) \
+do { \
+        MCPKG_NET_ERROR _e_ = ( expr ); \
+        CHECK ( _e_ == MCPKG_NET_NO_ERROR , "%s err=%d", \
+              ( const char * ) ( test_name ), ( int ) _e_ ); \
+} while ( 0 )
 
 #ifdef __cplusplus
 }

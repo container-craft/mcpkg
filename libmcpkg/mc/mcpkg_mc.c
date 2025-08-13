@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "mc/mcpkg_mc.h"
+#include "container/mcpkg_str_list.h"
 
 static int mc_list_push_ptr(McPkgList **lstp, void *ptr)
 {

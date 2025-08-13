@@ -1,4 +1,4 @@
-#include "mcpkg_msgpack.h"
+#include "mcpkg_mp_util.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,10 +13,6 @@
 // Optional: string list helpers (adjust includes if your path differs)
 #include "container/mcpkg_str_list.h"
 
-// -------------------------
-// Internal writer/reader
-// -------------------------
-
 struct mcpkg_mp_wr {
     msgpack_sbuffer	sbuf;
     msgpack_packer	pk;
@@ -30,10 +26,6 @@ struct mcpkg_mp_rd {
     const char		*buf;
     size_t			len;
 };
-
-// -------------------------
-// Writer API
-// -------------------------
 
 int mcpkg_mp_writer_init(struct McPkgMpWriter *w)
 {
@@ -336,10 +328,6 @@ int mcpkg_mp_write_header(struct McPkgMpWriter *w,
 out:
     return ret;
 }
-
-// -------------------------
-// Reader API
-// -------------------------
 
 int mcpkg_mp_reader_init(struct McPkgMpReader *r,
                          const void *buf, size_t len)
@@ -649,10 +637,6 @@ int mcpkg_mp_get_bin_borrow(const struct McPkgMpReader *r, int key,
     return MCPKG_MP_ERR_PARSE;
 }
 
-// -------------------------
-// String list helpers
-// -------------------------
-
 int mcpkg_mp_kv_strlist(struct McPkgMpWriter *w, int key,
                         const McPkgStringList *sl)
 {
@@ -756,5 +740,145 @@ int mcpkg_mp_get_strlist_dup(const struct McPkgMpReader *r, int key,
 out_free:
     mcpkg_stringlist_free(sl);
     return ret;
+}
+
+int mcpkg_mp_kv_map_begin(struct McPkgMpWriter *w, int key, uint32_t key_count)
+{
+    int ret = MCPKG_MP_NO_ERROR;
+    struct mcpkg_mp_wr *wr;
+
+    if (!w || !w->impl) return MCPKG_MP_ERR_INVALID_ARG;
+    wr = (struct mcpkg_mp_wr *)w->impl;
+
+    ret = mcpkg__kv_key(wr, key);
+    if (ret != MCPKG_MP_NO_ERROR) return ret;
+
+    if (msgpack_pack_map(&wr->pk, key_count) != 0)
+        return MCPKG_MP_ERR_IO;
+
+    return MCPKG_MP_NO_ERROR;
+}
+
+int mcpkg_mp_kv_array_begin(struct McPkgMpWriter *w, int key, uint32_t count)
+{
+    int ret = MCPKG_MP_NO_ERROR;
+    struct mcpkg_mp_wr *wr;
+
+    if (!w || !w->impl) return MCPKG_MP_ERR_INVALID_ARG;
+    wr = (struct mcpkg_mp_wr *)w->impl;
+
+    ret = mcpkg__kv_key(wr, key);
+    if (ret != MCPKG_MP_NO_ERROR) return ret;
+
+    if (msgpack_pack_array(&wr->pk, count) != 0)
+        return MCPKG_MP_ERR_IO;
+
+    return MCPKG_MP_NO_ERROR;
+}
+
+
+////// INTERACTIONS WITH THE CODE GENERATOR
+/* ---- value-level helpers ---- */
+
+/* Write a BIN value (no key) — for array elements or nested map values. */
+MCPKG_API int
+mcpkg_mp_write_bin(struct McPkgMpWriter *w, const void *data, uint32_t len)
+{
+    struct mcpkg_mp_wr *wr;
+    if (!w || !w->impl) return MCPKG_MP_ERR_INVALID_ARG;
+    wr = (struct mcpkg_mp_wr *)w->impl;
+
+    if (!data && len) return MCPKG_MP_ERR_INVALID_ARG;
+
+    if (msgpack_pack_bin(&wr->pk, len) != 0)
+        return MCPKG_MP_ERR_IO;
+    if (len && msgpack_pack_bin_body(&wr->pk, data, len) != 0)
+        return MCPKG_MP_ERR_IO;
+
+    return MCPKG_MP_NO_ERROR;
+}
+
+/* ---- array cursor (reader) ---- */
+
+struct McPkgMpArrayCur {
+    msgpack_object arr; /* shallow copy; lifetime tied to reader's unpacked root */
+};
+
+MCPKG_API int
+mcpkg_mp_get_array_cur(const struct McPkgMpReader *r, int key,
+                       struct McPkgMpArrayCur **out_cur,
+                       size_t *out_count, int *found)
+{
+    const struct mcpkg_mp_rd *rd;
+    msgpack_object v;
+    int f = 0;
+
+    if (!r || !r->impl || !out_cur || !out_count)
+        return MCPKG_MP_ERR_INVALID_ARG;
+
+    *out_cur = NULL;
+    *out_count = 0;
+    if (found) *found = 0;
+
+    rd = (const struct mcpkg_mp_rd *)r->impl;
+
+    /* find key in top-level map */
+    {
+        int ret = mcpkg__find_map_key(rd, key, &v, &f);
+        if (ret != MCPKG_MP_NO_ERROR)
+            return ret;
+    }
+    if (!f) {
+        if (found) *found = 0;
+        return MCPKG_MP_NO_ERROR;
+    }
+    if (v.type == MSGPACK_OBJECT_NIL) {
+        if (found) *found = 1;
+        /* treat nil as empty/not-present array */
+        return MCPKG_MP_NO_ERROR;
+    }
+    if (v.type != MSGPACK_OBJECT_ARRAY)
+        return MCPKG_MP_ERR_PARSE;
+
+    {
+        struct McPkgMpArrayCur *cur =
+            (struct McPkgMpArrayCur *)malloc(sizeof(*cur));
+        if (!cur)
+            return MCPKG_MP_ERR_NO_MEMORY;
+        cur->arr = v; /* shallow copy */
+        *out_cur = cur;
+        *out_count = (size_t)v.via.array.size;
+        if (found) *found = 1;
+        return MCPKG_MP_NO_ERROR;
+    }
+}
+
+MCPKG_API int
+mcpkg_mp_array_get_bin_borrow(struct McPkgMpArrayCur *cur,
+                              size_t idx,
+                              const void **out_ptr,
+                              size_t *out_len)
+{
+    if (!cur || !out_ptr || !out_len)
+        return MCPKG_MP_ERR_INVALID_ARG;
+
+    if (idx >= (size_t)cur->arr.via.array.size)
+        return MCPKG_MP_ERR_PARSE;
+
+    {
+        msgpack_object e = cur->arr.via.array.ptr[idx];
+        if (e.type != MSGPACK_OBJECT_BIN)
+            return MCPKG_MP_ERR_PARSE;
+
+        *out_ptr = e.via.bin.ptr;
+        *out_len = e.via.bin.size;
+        return MCPKG_MP_NO_ERROR;
+    }
+}
+
+MCPKG_API void
+mcpkg_mp_array_cur_destroy(struct McPkgMpArrayCur *cur)
+{
+    free(cur);
 }
 

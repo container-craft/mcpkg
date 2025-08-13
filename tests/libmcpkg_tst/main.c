@@ -5,6 +5,7 @@
 #include "tst_filesystem.h"
 #include "tst_pack.h"
 #include "tst_mc.h"
+#include "tst_net.h"
 
 int main(int argc, char **argv){
     tst_init_from_env();
@@ -14,6 +15,7 @@ int main(int argc, char **argv){
     run_tst_crypto();
     run_tst_pack();
     run_tst_mc();
+    run_tst_net();
 
     tst_summary("libmcpkg");
     return (g_tst_fails == 0) ? 0 : 1;

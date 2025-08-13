@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "mcpkg_mc_providers.h"
-#include "pack/mcpkg_msgpack.h"
+#include "mp/mcpkg_mp_util.h"
 #include "mcpkg_mc_util.h"
 // int-keyed fields (0/1 reserved for common TAG/VER)
 #define MC_PROV_K_PROVIDER    2

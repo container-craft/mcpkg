@@ -1,0 +1,11 @@
+version: 1
+unit: ledger
+base: tx
+include_prefix: "mp"
+
+fields:
+  - { key: 2, name: from_pub, type: "bin[32]", required: true }
+  - { key: 3, name: to_pub,   type: "bin[32]", required: true }
+  - { key: 4, name: amount,   type: i64,       required: true, comment: "non-negative" }
+  - { key: 5, name: nonce,    type: i64,       required: true }
+  - { key: 6, name: sig_from, type: "bin[64]", required: true }

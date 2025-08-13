@@ -1,0 +1,12 @@
+version: 1
+unit: ledger
+base: block
+include_prefix: "mp"
+
+fields:
+  - { key: 2, name: height,   type: i64,       required: true,  comment: "0 = genesis" }
+  - { key: 3, name: prev,     type: "bin[32]", required: true }
+  - { key: 4, name: sth,      type: "struct<McPkgLedgerSth>", required: true,
+        ref_include: "mp/mcpkg_mp_ledger_sth.h", ref_unit: "ledger_sth" }
+  - { key: 5, name: mint_pub, type: "bin[32]", required: true }
+  - { key: 6, name: sig,      type: "bin[64]", required: true }

@@ -4,7 +4,6 @@ project(${TARGET_NAME}
     VERSION 0.1
     LANGUAGES C)
 
-  # str/array_helper.c
 set(MCPKG_SOURCES
   ## Api
   # api/mcpkg_activate.c
@@ -13,21 +12,26 @@ set(MCPKG_SOURCES
   # api/mcpkg_api_client.c
 
   ## Filesystem
-  # fs/mcpkg_fs.c
-  # fs/mcpkg_fs.c
   fs/mcpkg_fs_dir.c
   fs/mcpkg_fs_file.c
   fs/mcpkg_fs_util.c
   fs/mcpkg_fs_error.c
   fs/mcpkg_fs_std_paths.c
 
-  # providers/modrith_client.c
+  ## NETWORKING
+  net/mcpkg_net_util.c
+  net/mcpkg_net_url.c
+  net/mcpkg_net_client.c
+  # net/modrith_client.c
 
-  ## Packages meta-data
-  pack/mcpkg_msgpack.c
-  # packages/mcpkg_info_entry.c
-  # packages/mcpkg_entry.c
-  # packages/mcpkg_deps_entry.c
+  ## MessagePack
+  mp/mcpkg_mp_util.c
+  mp/mcpkg_mp_cache.c
+  mp/mcpkg_mp_depends.c
+  mp/mcpkg_mp_digest.c
+  mp/mcpkg_mp_file.c
+  mp/mcpkg_mp_origin.c
+  # pack/mcpkg_pack_utils.c
 
   ## Lists
   container/mcpkg_list.c
@@ -37,10 +41,10 @@ set(MCPKG_SOURCES
 
   # Crypto
   crypto/mcpkg_crypto.c
+  crypto/mcpkg_crypto_ledger.c
   crypto/mcpkg_crypto_hash.c
   crypto/mcpkg_crypto_hex.c
   crypto/mcpkg_crypto_init.c
-  # crypto/mcpkg_crypto_io.c
   crypto/mcpkg_crypto_provider_verify.c
   crypto/mcpkg_crypto_rand.c
   crypto/mcpkg_crypto_sign.c
@@ -76,10 +80,10 @@ set(MCPKG_PUBLIC_HEADERS
 
   # Crypto
   crypto/mcpkg_crypto.h
+  crypto/mcpkg_crypto_ledger.h
   crypto/mcpkg_crypto_hash.h
   crypto/mcpkg_crypto_hex.h
   crypto/mcpkg_crypto_init.h
-  # crypto/mcpkg_crypto_io.h
   crypto/mcpkg_crypto_provider_verify.h
   crypto/mcpkg_crypto_rand.h
   crypto/mcpkg_crypto_sign.h
@@ -97,30 +101,35 @@ set(MCPKG_PUBLIC_HEADERS
   fs/mcpkg_fs_util.h
   fs/mcpkg_fs_std_paths.h
 
+  ## Networking.
+  net/mcpkg_net_util.h
+  net/mcpkg_net_url.h
+  net/mcpkg_net_client.h
+
   ## Providers
   # providers/modrith_client.h
 
   ## Bad Math
   math/mcpkg_math.h
 
-  # Package meta-data
-  # pack/mcpkg_deps_entry.c
-  # pack/mcpkg_deps_entry.h
-  # pack/mcpkg_entry.c
-  # pack/mcpkg_entry.h
-  # pack/mcpkg_info_entry.c
-  # pack/mcpkg_info_entry.h
-  pack/mcpkg_msgpack.h
+  # Message Packs
+  mp/mcpkg_mp_util.h
+  mp/mcpkg_mp_digest.h
+  mp/mcpkg_mp_origin.h
+  mp/mcpkg_mp_depends.h
+  mp/mcpkg_mp_file.h
+  mp/mcpkg_mp_cache.h
+  mp/mcpkg_mp_block.h
+
   # pack/mcpkg_visited_set.h
 
-  ## lists, maps, so on
+  ## Container
   container/mcpkg_map.h
   container/mcpkg_hash.h
   container/mcpkg_container_util.h
   container/mcpkg_container_error.h
   container/mcpkg_list.h
   container/mcpkg_str_list.h
-
 
   ## Minecraft
   mc/mcpkg_mc.h

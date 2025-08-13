@@ -53,6 +53,10 @@ else()
     )
 endif()
 
+
+
+add_subdirectory(mpgen)
+
 add_subdirectory(libmcpkg)
 
 ## disabled for now while the backend gets refactored

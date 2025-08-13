@@ -1,0 +1,13 @@
+version: 1
+unit: pkg
+base: file
+include_prefix: "mp"
+
+fields:
+  - { key: 2, name: url,        type: str,     required: true,  comment: "download URL" }
+  - { key: 3, name: file_name,  type: str,     required: true,  comment: "target filename" }
+  - { key: 4, name: size,       type: i64,     required: false, comment: "non-negative; bytes" }
+  - { key: 5, name: has_size,   type: u32,     required: false, comment: "presence bit (0/1)" }
+  - { key: 6, name: digests,    type: "list<struct<McPkgPkgDigest>>", required: false,
+      ref_include: "mp/mcpkg_mp_pkg_digest.h", ref_unit: "pkg_digest",
+      comment: "array of digests (recommended ≥1)" }

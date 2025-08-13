@@ -2,7 +2,7 @@
 
 #include <string.h>
 #include "mcpkg_mc_util.h"
-#include "pack/mcpkg_msgpack.h"
+#include "mp/mcpkg_mp_util.h"
 
 // Static strings for reuse.
 static const char *const s_unknown   = "unknown";
