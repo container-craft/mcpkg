@@ -19,9 +19,8 @@ struct McPkgThreadFuture {
 	struct McPkgThreadFutureWatch *watchers;
 };
 
-static void mcpkg_thread_future_invoke_watchers(struct McPkgThreadFutureWatch
-                *w,
-                void *result, int err)
+static void
+mcpkg_thread_future_invoke_watchers(struct McPkgThreadFutureWatch *w, void *result, int err)
 {
 	while (w) {
 		struct McPkgThreadFutureWatch *next = w->next;

@@ -12,6 +12,7 @@ MCPKG_API MCPKG_FS_ERROR mcpkg_fs_touch(const char *path);
 
 /* unlink file if present (file or empty dir). */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_unlink(const char *path);
+MCPKG_FS_ERROR mcpkg_fs_file_remove(const char *path); /* alias of unlink */
 
 /* copy file bytes src→dst. if overwrite==0 and dst exists, ERR_EXISTS. */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_cp_file(const char *src, const char *dst,

@@ -6,6 +6,7 @@
 #include "tst_pack.h"
 #include "tst_mc.h"
 #include "tst_net.h"
+#include "tst_net_downloader.h"
 #include "tst_ledger_roundtrip.h"
 #include "tst_pkg_roundtrip.h"
 #include "tst_threads_basic.h"
@@ -20,7 +21,10 @@ int main(int argc, char **argv)
 	run_tst_crypto();
 	run_tst_pack();
 	run_tst_mc();
+
 	run_tst_net();
+    run_tst_net_downloader();
+
     run_tst_ledger_roundtrip();
     run_tst_pkg_roundtrip();
     run_threads_basic();

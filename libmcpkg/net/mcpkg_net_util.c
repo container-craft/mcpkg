@@ -51,6 +51,45 @@ mcpkg_net_strerror(int err)
 	return s;
 }
 
+int
+mcpkg_net_curl_to_net_error(CURLcode cc)
+{
+    switch (cc) {
+    case CURLE_OK:
+        return MCPKG_NET_NO_ERROR;
+    case CURLE_UNSUPPORTED_PROTOCOL:
+        return MCPKG_NET_ERR_PROTO;
+    case CURLE_COULDNT_RESOLVE_HOST:
+        return MCPKG_NET_ERR_DNS;
+    case CURLE_COULDNT_CONNECT:
+        return MCPKG_NET_ERR_CONNECT;
+    case CURLE_OPERATION_TIMEDOUT:
+        return MCPKG_NET_ERR_TIMEOUT;
+    case CURLE_SEND_ERROR:
+    case CURLE_RECV_ERROR:
+        return MCPKG_NET_ERR_IO;
+    case CURLE_SSL_CONNECT_ERROR:
+    case CURLE_SSL_ENGINE_NOTFOUND:
+    case CURLE_SSL_ENGINE_SETFAILED:
+    case CURLE_SSL_CERTPROBLEM:
+    case CURLE_SSL_CIPHER:
+    case CURLE_SSL_CACERT_BADFILE:
+    case CURLE_SSL_SHUTDOWN_FAILED:
+    case CURLE_PEER_FAILED_VERIFICATION: //     case CURLE_SSL_CACERT:
+#if defined(CURLE_SSL_INVALIDCERTSTATUS)
+    case CURLE_SSL_INVALIDCERTSTATUS:
+#endif
+        return MCPKG_NET_ERR_TLS;
+    case CURLE_OUT_OF_MEMORY:
+        return MCPKG_NET_ERR_NOMEM;
+    default:
+        return MCPKG_NET_ERR_OTHER;
+    }
+}
+
+
+
+
 MCPKG_API int
 mcpkg_net_buf_init(struct McPkgNetBuf *b, size_t initial_cap)
 {
@@ -78,31 +117,25 @@ mcpkg_net_buf_init(struct McPkgNetBuf *b, size_t initial_cap)
 MCPKG_API int
 mcpkg_net_buf_reserve(struct McPkgNetBuf *b, size_t need_cap)
 {
-	int ret = MCPKG_NET_NO_ERROR;
+    size_t new_cap;
+    void *p;
 
-	if (!b)
-		ret = MCPKG_NET_ERR_INVALID;
+    if (!b) return MCPKG_NET_ERR_INVALID;
+    if (b->cap >= need_cap) return MCPKG_NET_NO_ERROR;
 
-	if (ret == MCPKG_NET_NO_ERROR && b->cap < need_cap) {
-		size_t new_cap = b->cap ? b->cap : 64;
-		while (new_cap < need_cap) {
-			if (new_cap > (SIZE_MAX / 2)) {
-				ret = MCPKG_NET_ERR_RANGE;
-				break;
-			}
-			new_cap *= 2;
-		}
-		if (ret == MCPKG_NET_NO_ERROR) {
-			void *p = realloc(b->data, new_cap);
-			if (!p) {
-				ret = MCPKG_NET_ERR_NOMEM;
-			} else {
-				b->data = (unsigned char *)p;
-				b->cap = new_cap;
-			}
-		}
-	}
-	return ret;
+    new_cap = b->cap ? b->cap : 64;
+    while (new_cap < need_cap) {
+        if (new_cap > (SIZE_MAX / 2))
+            return MCPKG_NET_ERR_RANGE;
+        new_cap *= 2;
+    }
+
+    p = realloc(b->data, new_cap);
+    if (!p) return MCPKG_NET_ERR_NOMEM;
+
+    b->data = (unsigned char *)p;
+    b->cap  = new_cap;
+    return MCPKG_NET_NO_ERROR;
 }
 
 MCPKG_API int

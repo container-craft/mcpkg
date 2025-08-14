@@ -79,7 +79,7 @@ void tst_pass(const char *func, const char *file, const char *fmt, ...)
 {
     va_list ap;
 
-    g_tst_passes++;
+    // g_tst_passes++;
 
     if (!g_tst_verbose)
         return;
@@ -94,7 +94,9 @@ void tst_info(const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
-    tst_vlog(TST_OUT_FD, "INFO", PRETTY_FUNC, __FILE__, fmt, ap);
+    if(g_tst_verbose)
+        tst_vlog(TST_OUT_FD, "INFO", PRETTY_FUNC, __FILE__, fmt, ap);
+
     va_end(ap);
 }
 
@@ -105,13 +107,8 @@ void tst_set_verbose(int on)
 
 void tst_init_from_env(void)
 {
-    const char *e = getenv("TST_VERBOSE");
-
-    if (e && *e) {
-        if (e[0] == '1' || e[0] == 'y' || e[0] == 'Y' ||
-            e[0] == 't' || e[0] == 'T')
+    if(TST_VERBOSE)
             g_tst_verbose = 1;
-    }
 }
 
 void tst_summary(const char *label)

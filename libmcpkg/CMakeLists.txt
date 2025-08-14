@@ -22,6 +22,7 @@ set(MCPKG_SOURCES
   net/mcpkg_net_util.c
   net/mcpkg_net_url.c
   net/mcpkg_net_client.c
+  net/mcpkg_net_downloader.c
   # net/modrith_client.c
 
   ## THREADS
@@ -129,6 +130,7 @@ set(MCPKG_PUBLIC_HEADERS
   net/mcpkg_net_util.h
   net/mcpkg_net_url.h
   net/mcpkg_net_client.h
+  net/mcpkg_net_downloader.h
 
   ## THREADING
   threads/mcpkg_thread.h

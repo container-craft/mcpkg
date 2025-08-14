@@ -1,6 +1,7 @@
 #ifndef MCPKG_NET_UTIL_H
 #define MCPKG_NET_UTIL_H
 
+#include <curl/curl.h>
 #include <stddef.h>
 #include "mcpkg_export.h"
 
@@ -18,6 +19,9 @@ typedef enum MCPKG_NET_ERROR {
 	MCPKG_NET_ERR_NOMEM       = 9,
 	MCPKG_NET_ERR_RANGE       = 10,
 	MCPKG_NET_ERR_RATELIMIT   = 11,
+    MCPKG_NET_ERR_IO          = 12,
+    MCPKG_NET_ERR_TLS         = 14,
+    MCPKG_NET_ERR_OTHER       = 200
 } MCPKG_NET_ERROR;
 
 /* Return a stable, static string for our error codes. */
@@ -29,6 +33,9 @@ struct McPkgNetBuf {
 	size_t len;
 	size_t cap;          // alloc
 };
+
+
+MCPKG_API int mcpkg_net_curl_to_net_error(CURLcode cc);
 
 MCPKG_API int  mcpkg_net_buf_init(struct McPkgNetBuf *b, size_t initial_cap);
 MCPKG_API int  mcpkg_net_buf_reserve(struct McPkgNetBuf *b, size_t need_cap);

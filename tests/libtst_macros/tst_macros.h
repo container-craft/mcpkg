@@ -5,6 +5,14 @@
 #include <stddef.h>
 #include <string.h> /* strcmp used by CHECK_STR */
 
+#ifndef MCPKG_TST_VERBOSE
+#define MCPKG_TST_VERBOSE 0
+#endif
+
+#ifndef MCPKG_TEST_ONLINE
+#define MCPKG_TEST_ONLINE 0
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,7 +70,7 @@ size_t tst_list_size(const void *list);     /* expects McPkgList*      */
 #define CHECK(cond, ...) \
 do { \
         if ( ( cond ) ) { \
-            g_tst_passes++; \
+            g_tst_passes++ ; \
             if ( g_tst_verbose ) { \
                 tst_pass ( PRETTY_FUNC, __FILE__, __VA_ARGS__ ); \
         } \
@@ -119,7 +127,7 @@ do { \
 
 /* Nullness helpers */
 #define CHECK_NONNULL(test_name, p) \
-    CHECK ( ( p ) != NULL, "%s expected non-NULL", ( const char * ) ( test_name ) )
+CHECK ( ( p ) != NULL, "%s expected non-NULL", ( const char * ) ( test_name ) )
 
 #define CHECK_NULL(test_name, p) \
 CHECK ( ( p ) == NULL, "%s expected NULL", ( const char * ) ( test_name ) )
@@ -187,10 +195,12 @@ do { \
 #define TST_BLOCK(name, body) \
 do { \
         int before_ = g_tst_fails; \
-        tst_info("%s: starting...", (name)); \
-        do { body } while (0); \
-        if (g_tst_fails == before_) \
-        tst_info("%s: OK", (name)); \
+        tst_info ( "%s: starting..." , ( name ) ) ; \
+        do \
+                { body } \
+        while ( 0 ) ; \
+        if ( g_tst_fails == before_ ) \
+                tst_info ( "%s: OK", ( name ) ); \
 } while (0)
 
 
