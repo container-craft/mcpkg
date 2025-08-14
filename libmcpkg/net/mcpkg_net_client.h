@@ -14,18 +14,19 @@ typedef struct McPkgNetClient McPkgNetClient;
 
 /* Rate limit snapshot */
 typedef struct {
-    long		limit;		/* -1 if unknown */
-    long		remaining;	/* -1 if unknown */
-    long		reset;		/* epoch secs or provider-defined; -1 if unknown */
+	long		limit;		/* -1 if unknown */
+	long		remaining;	/* -1 if unknown */
+	long		reset;		/* epoch secs or provider-defined; -1 if unknown */
 } McPkgNetRateLimit;
 
 /* Client config */
 typedef struct {
-    const char	*base_url;		/* required */
-    const char	*user_agent;		/* optional */
-    const char *const *default_headers;	/* NULL-terminated vector of "Name: value" */
-    long		connect_timeout_ms;	/* <=0 -> default */
-    long		operation_timeout_ms;	/* <=0 -> default */
+	const char	*base_url;		/* required */
+	const char	*user_agent;		/* optional */
+	const char *const
+	*default_headers;	/* NULL-terminated vector of "Name: value" */
+	long		connect_timeout_ms;	/* <=0 -> default */
+	long		operation_timeout_ms;	/* <=0 -> default */
 } McPkgNetClientCfg;
 
 /* one-time lib init/cleanup */
@@ -37,10 +38,13 @@ MCPKG_API McPkgNetClient *mcpkg_net_client_new(const McPkgNetClientCfg *cfg);
 MCPKG_API void            mcpkg_net_client_free(McPkgNetClient *c);
 
 /* options */
-MCPKG_API int mcpkg_net_client_set_timeout(McPkgNetClient *c, long connect_ms, long op_ms);
-MCPKG_API int mcpkg_net_client_set_header(McPkgNetClient *c, const char *header_line);
+MCPKG_API int mcpkg_net_client_set_timeout(McPkgNetClient *c, long connect_ms,
+                long op_ms);
+MCPKG_API int mcpkg_net_client_set_header(McPkgNetClient *c,
+                const char *header_line);
 MCPKG_API int mcpkg_net_client_clear_headers(McPkgNetClient *c);
-MCPKG_API int mcpkg_net_client_set_user_agent(McPkgNetClient *c, const char *ua);
+MCPKG_API int mcpkg_net_client_set_user_agent(McPkgNetClient *c,
+                const char *ua);
 
 /* query_kv_pairs: NULL-terminated [key, value, key, value, ... , NULL] */
 /* request */

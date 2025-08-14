@@ -10,17 +10,18 @@ struct McPkgThreadFutureWatch {
 };
 
 struct McPkgThreadFuture {
-    struct McPkgMutex       *lock;
-    struct McPkgCond        *cv;
-    int                     done;		/* 0/1 */
-    int                     err;
-    void                   *result;
+	struct McPkgMutex       *lock;
+	struct McPkgCond        *cv;
+	int                     done;		/* 0/1 */
+	int                     err;
+	void                   *result;
 
 	struct McPkgThreadFutureWatch *watchers;
 };
 
 static void
-mcpkg_thread_future_invoke_watchers(struct McPkgThreadFutureWatch *w, void *result, int err)
+mcpkg_thread_future_invoke_watchers(struct McPkgThreadFutureWatch *w,
+                                    void *result, int err)
 {
 	while (w) {
 		struct McPkgThreadFutureWatch *next = w->next;

@@ -23,12 +23,12 @@ int main(int argc, char **argv)
 	run_tst_mc();
 
 	run_tst_net();
-    run_tst_net_downloader();
+	run_tst_net_downloader();
 
-    run_tst_ledger_roundtrip();
-    run_tst_pkg_roundtrip();
-    run_threads_basic();
-    run_threads_concurrent();
+	run_tst_ledger_roundtrip();
+	run_tst_pkg_roundtrip();
+	run_threads_basic();
+	run_threads_concurrent();
 
 	tst_summary("libmcpkg");
 	return (g_tst_fails == 0) ? 0 : 1;

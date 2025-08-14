@@ -9,13 +9,15 @@
 
 MCPKG_BEGIN_DECLS
 
-    struct McPkgNetUrl;
+struct McPkgNetUrl;
 typedef struct McPkgNetUrl McPkgNetUrl;
 
 /* lifecycle */
-MCPKG_API McPkgNetUrl *mcpkg_net_url_new(void);          /* returns NULL on OOM */
+MCPKG_API McPkgNetUrl *mcpkg_net_url_new(
+        void);          /* returns NULL on OOM */
 MCPKG_API void         mcpkg_net_url_free(McPkgNetUrl *u);
-MCPKG_API McPkgNetUrl *mcpkg_net_url_clone(McPkgNetUrl *u); /* deep clone, NULL on OOM */
+MCPKG_API McPkgNetUrl *mcpkg_net_url_clone(McPkgNetUrl
+                *u); /* deep clone, NULL on OOM */
 
 /* whole-URL parse / clear */
 MCPKG_API int mcpkg_net_url_parse(McPkgNetUrl *u, const char *url_utf8);
@@ -28,24 +30,31 @@ MCPKG_API int mcpkg_net_url_has_fragment(McPkgNetUrl *u, int *out_has_fragment);
 
 MCPKG_API int mcpkg_net_url_scheme(McPkgNetUrl *u, char *buf, size_t buf_sz);
 MCPKG_API int mcpkg_net_url_host(McPkgNetUrl *u, char *buf, size_t buf_sz);
-MCPKG_API int mcpkg_net_url_host_ascii(McPkgNetUrl *u, char *buf, size_t buf_sz);
+MCPKG_API int mcpkg_net_url_host_ascii(McPkgNetUrl *u, char *buf,
+                                       size_t buf_sz);
 MCPKG_API int mcpkg_net_url_port(McPkgNetUrl *u, int *out_port);
 MCPKG_API int mcpkg_net_url_path(McPkgNetUrl *u, char *buf, size_t buf_sz);
 MCPKG_API int mcpkg_net_url_query(McPkgNetUrl *u, char *buf, size_t buf_sz);
 MCPKG_API int mcpkg_net_url_fragment(McPkgNetUrl *u, char *buf, size_t buf_sz);
 
 /* setters (auto-encode where appropriate) */
-MCPKG_API int mcpkg_net_url_set_scheme(McPkgNetUrl *u, const char *scheme_ascii);
+MCPKG_API int mcpkg_net_url_set_scheme(McPkgNetUrl *u,
+                                       const char *scheme_ascii);
 MCPKG_API int mcpkg_net_url_set_host(McPkgNetUrl *u, const char *host_utf8);
 MCPKG_API int mcpkg_net_url_set_port(McPkgNetUrl *u, int port); /* 0 clears */
 MCPKG_API int mcpkg_net_url_set_path(McPkgNetUrl *u, const char *path_utf8);
-MCPKG_API int mcpkg_net_url_set_query(McPkgNetUrl *u, const char *query_no_qmark);
-MCPKG_API int mcpkg_net_url_add_query(McPkgNetUrl *u, const char *key_utf8, const char *val_utf8);
-MCPKG_API int mcpkg_net_url_set_fragment(McPkgNetUrl *u, const char *fragment_no_hash);
-MCPKG_API int mcpkg_net_url_set_password(McPkgNetUrl *u, const char *password_utf8);
+MCPKG_API int mcpkg_net_url_set_query(McPkgNetUrl *u,
+                                      const char *query_no_qmark);
+MCPKG_API int mcpkg_net_url_add_query(McPkgNetUrl *u, const char *key_utf8,
+                                      const char *val_utf8);
+MCPKG_API int mcpkg_net_url_set_fragment(McPkgNetUrl *u,
+                const char *fragment_no_hash);
+MCPKG_API int mcpkg_net_url_set_password(McPkgNetUrl *u,
+                const char *password_utf8);
 
 /* to-string */
-MCPKG_API int mcpkg_net_url_to_string_buf(McPkgNetUrl *u, char *buf, size_t buf_sz);
+MCPKG_API int mcpkg_net_url_to_string_buf(McPkgNetUrl *u, char *buf,
+                size_t buf_sz);
 /* Allocates a fresh copy (malloc). Caller must free(*out). */
 MCPKG_API int mcpkg_net_url_to_string(McPkgNetUrl *u, char **out);
 

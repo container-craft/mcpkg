@@ -553,5 +553,5 @@ MCPKG_FS_ERROR mcpkg_fs_ln_sf(const char *target, const char *link_path,
 
 MCPKG_FS_ERROR mcpkg_fs_file_remove(const char *path)
 {
-    return mcpkg_fs_unlink(path);
+	return mcpkg_fs_unlink(path);
 }

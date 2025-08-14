@@ -19,9 +19,9 @@ typedef enum MCPKG_NET_ERROR {
 	MCPKG_NET_ERR_NOMEM       = 9,
 	MCPKG_NET_ERR_RANGE       = 10,
 	MCPKG_NET_ERR_RATELIMIT   = 11,
-    MCPKG_NET_ERR_IO          = 12,
-    MCPKG_NET_ERR_TLS         = 14,
-    MCPKG_NET_ERR_OTHER       = 200
+	MCPKG_NET_ERR_IO          = 12,
+	MCPKG_NET_ERR_TLS         = 14,
+	MCPKG_NET_ERR_OTHER       = 200
 } MCPKG_NET_ERROR;
 
 /* Return a stable, static string for our error codes. */
