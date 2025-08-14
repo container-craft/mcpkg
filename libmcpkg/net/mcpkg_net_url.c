@@ -363,3 +363,28 @@ MCPKG_API int mcpkg_net_url_to_string(McPkgNetUrl *u, char **out)
 	*out = dst;
 	return MCPKG_NET_NO_ERROR;
 }
+
+
+int mcpkg_net_url_vaild_schema(const char *s)
+{
+	if (!s) return 0;
+	return !strncmp(s, "http://", 7) ||
+	       !strncmp(s, "https://", 8) ||
+	       !strncmp(s, "file://", 7);
+}
+
+int mcpkg_net_url_is_abs(const char *p)
+{
+	if (!p || !p[0]) return 0;
+#if defined(_WIN32)
+	if (p[0] == '/' || p[0] == '\\') return 1;
+	if (((p[0] >= 'A' && p[0] <= 'Z') || (p[0] >= 'a' && p[0] <= 'z')) &&
+	    p[1] == ':')
+		return 1;
+	return 0;
+#else
+	return (p[0] == '/');
+#endif
+}
+
+

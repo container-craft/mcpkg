@@ -13,8 +13,7 @@ struct McPkgNetUrl;
 typedef struct McPkgNetUrl McPkgNetUrl;
 
 /* lifecycle */
-MCPKG_API McPkgNetUrl *mcpkg_net_url_new(
-        void);          /* returns NULL on OOM */
+MCPKG_API McPkgNetUrl *mcpkg_net_url_new(void);
 MCPKG_API void         mcpkg_net_url_free(McPkgNetUrl *u);
 MCPKG_API McPkgNetUrl *mcpkg_net_url_clone(McPkgNetUrl
                 *u); /* deep clone, NULL on OOM */
@@ -57,6 +56,12 @@ MCPKG_API int mcpkg_net_url_to_string_buf(McPkgNetUrl *u, char *buf,
                 size_t buf_sz);
 /* Allocates a fresh copy (malloc). Caller must free(*out). */
 MCPKG_API int mcpkg_net_url_to_string(McPkgNetUrl *u, char **out);
+
+MCPKG_API int mcpkg_net_url_vaild_schema(const char *s);
+
+
+MCPKG_API int mcpkg_net_url_is_abs(const char *p);
+
 
 MCPKG_END_DECLS
 #endif /* MCPKG_NET_URL_H */

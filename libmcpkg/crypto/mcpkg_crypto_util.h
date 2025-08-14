@@ -17,7 +17,9 @@ typedef enum {
 	MCPKG_CRYPTO_ERR_PARSE       = -5,
 	MCPKG_CRYPTO_ERR_VERIFY      = -6,
 	MCPKG_CRYPTO_ERR_UNSUPPORTED = -7,
-	MCPKG_CRYPTO_ERR_MISMATCH    = -8
+	MCPKG_CRYPTO_ERR_MISMATCH    = -8,
+	MCPKG_CRYPTO_ERR_SIGN        = -9,
+	MCPKG_CRYPTO_ERR_INVALID     = -10
 } MCPKG_CRYPTO_ERR;
 
 /* Simple algorithm IDs (informational; not bitmasks) */

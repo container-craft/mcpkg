@@ -21,5 +21,7 @@ MCPKG_API MCPKG_FS_ERROR mcpkg_fs_cp_dir(const char *src, const char *dst,
 /* recursively remove directory tree (like rm -rf). */
 MCPKG_API MCPKG_FS_ERROR mcpkg_fs_rm_r(const char *path);
 
+MCPKG_API char *cdup(const char *dir);
+
 MCPKG_END_DECLS
 #endif /* MCPKG_FS_DIR_H */

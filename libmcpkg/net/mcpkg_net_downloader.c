@@ -3,6 +3,7 @@
 
 #include "mcpkg_export.h"
 
+#include "net/mcpkg_net_url.h"
 #include "net/mcpkg_net_client.h"
 #include "net/mcpkg_net_util.h"
 
@@ -25,53 +26,20 @@ struct McPkgNetDownloader {
 	char                    *download_dir;  /* optional copy */
 };
 
-/* ---------------- internal helpers ---------------- */
-
-static int map_fs_to_net(int fs_err)
-{
-	switch (fs_err) {
-		case MCPKG_FS_OK:
-			return MCPKG_NET_NO_ERROR;
-		case MCPKG_FS_ERR_OOM:
-			return MCPKG_NET_ERR_NOMEM;
-		case MCPKG_FS_ERR_NOSPC:
-			return MCPKG_NET_ERR_IO;
-		case MCPKG_FS_ERR_EXISTS:
-			return MCPKG_NET_ERR_OTHER;
-		case MCPKG_FS_ERR_NOT_FOUND:
-			return MCPKG_NET_ERR_OTHER;
-		case MCPKG_FS_ERR_RANGE:
-			return MCPKG_NET_ERR_OTHER;
-		default:
-			return MCPKG_NET_ERR_IO;
-	}
-}
 
 static char *cdup(const char *s)
 {
 	size_t n;
 	char *d;
 
-	if (!s) return NULL;
+	if (!s)
+		return NULL;
 	n = strlen(s) + 1U;
 	d = (char *)malloc(n);
-	if (!d) return NULL;
+	if (!d)
+		return NULL;
 	memcpy(d, s, n);
 	return d;
-}
-
-static int path_is_abs(const char *p)
-{
-	if (!p || !p[0]) return 0;
-#if defined(_WIN32)
-	if (p[0] == '/' || p[0] == '\\') return 1;
-	if (((p[0] >= 'A' && p[0] <= 'Z') || (p[0] >= 'a' && p[0] <= 'z')) &&
-	    p[1] == ':')
-		return 1;
-	return 0;
-#else
-	return (p[0] == '/');
-#endif
 }
 
 static char *join_paths(const char *base, const char *rel)
@@ -100,7 +68,8 @@ static char *join_paths(const char *base, const char *rel)
 
 	need = nb + (add_sep ? 1 : 0) + nr + 1;
 	out = (char *)malloc(need);
-	if (!out) return NULL;
+	if (!out)
+		return NULL;
 
 	memcpy(out, base, nb);
 	if (add_sep) {
@@ -116,7 +85,6 @@ static char *join_paths(const char *base, const char *rel)
 	return out;
 }
 
-/* ---------------- lifecycle ---------------- */
 
 int mcpkg_net_downloader_new(const struct McPkgNetDownloaderCfg *cfg,
                              struct McPkgNetDownloader **out)
@@ -179,8 +147,6 @@ void mcpkg_net_downloader_free(struct McPkgNetDownloader *dl)
 	free(dl);
 }
 
-/* ---------------- task + enqueue ---------------- */
-
 struct DlTask {
 	struct McPkgNetClient           *cli;       /* borrowed */
 	char                            *path;      /* GET path */
@@ -191,7 +157,8 @@ struct DlTask {
 static void strv_free(char **v)
 {
 	size_t i;
-	if (!v) return;
+	if (!v)
+		return;
 	for (i = 0; v[i] != NULL; i++)
 		free(v[i]);
 	free(v);
@@ -254,7 +221,7 @@ static int dl_task_run(void *arg, void **out_result, int *out_err)
 	/* 2) write to file */
 	fe = mcpkg_fs_write_all(t->outfile, buf.data, buf.len, /*overwrite*/1);
 	if (fe != MCPKG_FS_OK) {
-		if (out_err) *out_err = map_fs_to_net(fe);
+		if (out_err) *out_err = mcpkg_net_utils_fs_err_to_net_err(fe);
 		mcpkg_net_buf_free(&buf);
 		free(t->path);
 		strv_free(t->query);
@@ -304,7 +271,7 @@ int mcpkg_net_downloader_fetch(struct McPkgNetDownloader *dl,
 		return MCPKG_THREAD_E_INVAL;
 
 	/* resolve outfile against download_dir if relative */
-	if (path_is_abs(outfile) || !dl->download_dir) {
+	if (mcpkg_net_url_is_abs(outfile) || !dl->download_dir) {
 		final_out = cdup(outfile);
 	} else {
 		final_out = join_paths(dl->download_dir, outfile);

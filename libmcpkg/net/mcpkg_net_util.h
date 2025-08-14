@@ -4,6 +4,7 @@
 #include <curl/curl.h>
 #include <stddef.h>
 #include "mcpkg_export.h"
+#include "mcpkg_fs_error.h"
 
 MCPKG_BEGIN_DECLS
 typedef enum MCPKG_NET_ERROR {
@@ -35,6 +36,45 @@ struct McPkgNetBuf {
 };
 
 
+static int mcpkg_net_utils_fs_err_to_net_err(int fs_err)
+{
+	switch (fs_err) {
+		case MCPKG_FS_OK:
+			return MCPKG_NET_NO_ERROR;
+		case MCPKG_FS_ERR_OOM:
+			return MCPKG_NET_ERR_NOMEM;
+		case MCPKG_FS_ERR_NOSPC:
+			return MCPKG_NET_ERR_IO;
+		case MCPKG_FS_ERR_EXISTS:
+			return MCPKG_NET_ERR_OTHER;
+		case MCPKG_FS_ERR_NOT_FOUND:
+			return MCPKG_NET_ERR_OTHER;
+		case MCPKG_FS_ERR_RANGE:
+			return MCPKG_NET_ERR_OTHER;
+		default:
+			return MCPKG_NET_ERR_IO;
+	}
+}
+
+// static int map_fs_to_net(int fs_err)
+// {
+//     switch (fs_err) {
+//         case MCPKG_FS_OK:
+//             return MCPKG_NET_NO_ERROR;
+//         case MCPKG_FS_ERR_OOM:
+//             return MCPKG_NET_ERR_NOMEM;
+//         case MCPKG_FS_ERR_NOSPC:
+//             return MCPKG_NET_ERR_IO;
+//         case MCPKG_FS_ERR_EXISTS:
+//             return MCPKG_NET_ERR_OTHER;
+//         case MCPKG_FS_ERR_NOT_FOUND:
+//             return MCPKG_NET_ERR_OTHER;
+//         case MCPKG_FS_ERR_RANGE:
+//             return MCPKG_NET_ERR_OTHER;
+//         default:
+//             return MCPKG_NET_ERR_IO;
+//     }
+// }
 MCPKG_API int mcpkg_net_curl_to_net_error(CURLcode cc);
 
 MCPKG_API int  mcpkg_net_buf_init(struct McPkgNetBuf *b, size_t initial_cap);

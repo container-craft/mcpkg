@@ -30,6 +30,7 @@ set(TST_LIBMCPKG_SOURCE
   tst_net_downloader.h
   tst_threads_basic.h
   tst_threads_concurrent.h
+  tst_modrinth_blockchain.h
 )
 
 add_executable(${TARGET_NAME} ${TST_LIBMCPKG_SOURCE})

@@ -326,3 +326,25 @@ MCPKG_FS_ERROR mcpkg_fs_rm_r(const char *path)
 	return (rmdir(path) == 0) ? MCPKG_FS_OK : MCPKG_FS_ERR_IO;
 #endif
 }
+
+
+char *mcpkg_fs_dir_cd_up(const char *dir)
+{
+	size_t n;
+	char *d;
+
+	if (!dir)
+		return NULL;
+	n = strlen(dir) + 1U;
+	d = (char *)malloc(n);
+	if (!d)
+		return NULL;
+	memcpy(d, dir, n);
+	return d;
+}
+
+
+
+
+
+

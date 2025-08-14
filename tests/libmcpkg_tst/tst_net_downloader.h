@@ -5,15 +5,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* fs */
 #include <fs/mcpkg_fs_file.h>
 #include <fs/mcpkg_fs_error.h>
-/* net */
 #include <net/mcpkg_net_client.h>
 #include <net/mcpkg_net_downloader.h>
-/* threads (for futures) */
 #include <threads/mcpkg_thread_future.h>
-/* test macros */
 #include <tst_macros.h>
 
 /* Full URLs we intend to fetch (for documentation/visibility). */

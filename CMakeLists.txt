@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(MCPKG_BUILD_SHARED "Build libmcpkg as a shared" ON)
 ## test options
 option(TST_BUILD "Build tests for modules" ON)
-option(TST_VERBOSE "More output to uart no effect when TST_BUILD is off" ON)
+option(TST_VERBOSE "More output to uart no effect when TST_BUILD is off" OFF)
 option(TST_COMPILE_FAIL "compile time checks that should fail" OFF)
 option(TST_ONLINE "test downloads and other things that need internet" ON )
 

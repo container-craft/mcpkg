@@ -23,6 +23,10 @@ set(MCPKG_SOURCES
   net/mcpkg_net_url.c
   net/mcpkg_net_client.c
   net/mcpkg_net_downloader.c
+
+  net/modrinth/mcpkg_modrinth_json.c
+  net/modrinth/mcpkg_net_modrinth_client.c
+
   # net/modrith_client.c
 
   ## THREADS
@@ -77,6 +81,12 @@ set(MCPKG_SOURCES
   crypto/mcpkg_sip_hash.c
   crypto/third_party/md5/md5sum.c
   crypto/third_party/sha1/sha1.c
+  ##
+  crypto/mcpkg_manifest_and_sig.c
+  crypto/mcpkg_merkle_b2b32.c
+  crypto/mcpkg_leaf_index_cache.c
+  crypto/mcpkg_merkle_consistency_b2b32.c
+  crypto/mcpkg_repo_page.c
 
   ## Minecraft
   mc/mcpkg_mc.c
@@ -116,7 +126,12 @@ set(MCPKG_PUBLIC_HEADERS
   crypto/mcpkg_sip_hash.h
   crypto/third_party/md5/md5sum.h
   crypto/third_party/sha1/sha1.h
-
+  ##
+  crypto/mcpkg_manifest_and_sig.h
+  crypto/mcpkg_merkle_b2b32.h
+  crypto/mcpkg_leaf_index_cache.h
+  crypto/mcpkg_merkle_consistency_b2b32.h
+  crypto/mcpkg_repo_page.h
 
   # Filesystem
   fs/mcpkg_fs_dir.h
@@ -131,6 +146,9 @@ set(MCPKG_PUBLIC_HEADERS
   net/mcpkg_net_url.h
   net/mcpkg_net_client.h
   net/mcpkg_net_downloader.h
+  net/mcpkg_net_curl_util.h
+  net/modrinth/mcpkg_modrinth_json.h
+  net/modrinth/mcpkg_net_modrinth_client.h
 
   ## THREADING
   threads/mcpkg_thread.h

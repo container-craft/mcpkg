@@ -5,64 +5,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include <curl/curl.h>
 
+#include "mcpkg_net_curl_util.h"
 #include "net/mcpkg_net_url.h"
-#include "net/mcpkg_net_util.h"   /* McPkgNetBuf + buf_init/reserve/free */
-
-/* ---------------- internal: error mapping ---------------- */
-
-static int curlcode2neterr(CURLcode ce)
-{
-	switch (ce) {
-		case CURLE_OK:
-			return MCPKG_NET_NO_ERROR;
-		case CURLE_OUT_OF_MEMORY:
-			return MCPKG_NET_ERR_NOMEM;
-		case CURLE_OPERATION_TIMEDOUT:
-			return MCPKG_NET_ERR_TIMEOUT;
-		case CURLE_TOO_MANY_REDIRECTS:
-			return MCPKG_NET_ERR_PROTO;
-		case CURLE_URL_MALFORMAT:
-		case CURLE_UNSUPPORTED_PROTOCOL:
-			return MCPKG_NET_ERR_PROTO;
-		case CURLE_COULDNT_RESOLVE_HOST:
-		case CURLE_COULDNT_CONNECT:
-		case CURLE_SEND_ERROR:
-		case CURLE_RECV_ERROR:
-			return MCPKG_NET_ERR_IO;
-		default:
-			return MCPKG_NET_ERR_OTHER;
-	}
-}
-
-/* ---------------- internal: small helpers ---------------- */
-
-static struct curl_slist *slist_dup(const struct curl_slist *in)
-{
-	const struct curl_slist *p = in;
-	struct curl_slist *out = NULL;
-	while (p) {
-		struct curl_slist *n = curl_slist_append(out, p->data);
-		if (!n) {
-			curl_slist_free_all(out);
-			return NULL;
-		}
-		out = n;
-		p = p->next;
-	}
-	return out;
-}
-
-static int is_abs_url(const char *s)
-{
-	if (!s) return 0;
-	return !strncmp(s, "http://", 7) ||
-	       !strncmp(s, "https://", 8) ||
-	       !strncmp(s, "file://", 7);
-}
+#include "net/mcpkg_net_util.h"
 
 /* lower-case ASCII header key in-place */
 static void str_tolower_ascii(char *s)
@@ -73,23 +21,19 @@ static void str_tolower_ascii(char *s)
 	}
 }
 
-/* ---------------- client struct ---------------- */
 
 struct McPkgNetClient {
-	McPkgNetUrl             *base;                  /* base URL */
-	char                    *user_agent;            /* UA string (optional) */
-	struct curl_slist       *headers;               /* default headers */
+	McPkgNetUrl             *base;                  // base URL
+	char                    *user_agent;            // UA string (optional)
+	struct curl_slist       *headers;               // default headers
+	long                    connect_timeout_ms;     // 0 = libcurl default
+	long                    operation_timeout_ms;   // 0 = libcurl default
 
-	long                    connect_timeout_ms;     /* 0 = libcurl default */
-	long                    operation_timeout_ms;   /* 0 = libcurl default */
-
-	/* best-effort last-seen rate-limit values (unsynchronized but benign) */
-	int                     rl_limit;               /* -1 unknown */
-	int                     rl_remaining;           /* -1 unknown */
-	int                     rl_reset;               /* -1 unknown (epoch) */
+	int                     rl_limit;               // -1 unknown
+	int                     rl_remaining;           // -1 unknown
+	int                     rl_reset;               // -1 unknown (epoch)
 };
 
-/* ---------------- global init/cleanup ---------------- */
 
 MCPKG_API int
 mcpkg_net_global_init(void)
@@ -103,8 +47,6 @@ mcpkg_net_global_cleanup(void)
 {
 	curl_global_cleanup();
 }
-
-/* ---------------- lifecycle ---------------- */
 
 MCPKG_API McPkgNetClient *
 mcpkg_net_client_new(const McPkgNetClientCfg *cfg)
@@ -162,7 +104,6 @@ mcpkg_net_client_free(McPkgNetClient *c)
 	free(c);
 }
 
-/* ---------------- configuration ---------------- */
 
 MCPKG_API int
 mcpkg_net_client_set_header(McPkgNetClient *c, const char *header_line)
@@ -200,7 +141,6 @@ mcpkg_net_get_ratelimit(McPkgNetClient *c)
 	return rl;
 }
 
-/* ---------------- request plumbing ---------------- */
 
 static size_t curl_write_cb(char *ptr, size_t size, size_t nmemb, void *ud)
 {
@@ -275,10 +215,11 @@ static int build_request_url(McPkgNetClient *c,
 	if (!c || !c->base || !out_url)
 		return MCPKG_NET_ERR_INVALID;
 
-	if (is_abs_url(path_or_abs)) {
+	if (mcpkg_net_url_vaild_schema(path_or_abs)) {
 		size_t n = strlen(path_or_abs) + 1U;
 		url = (char *)malloc(n);
-		if (!url) return MCPKG_NET_ERR_NOMEM;
+		if (!url)
+			return MCPKG_NET_ERR_NOMEM;
 		memcpy(url, path_or_abs, n);
 		*out_url = url;
 		return MCPKG_NET_NO_ERROR;
@@ -312,10 +253,13 @@ static int build_request_url(McPkgNetClient *c,
 			}
 			q[0] = '\0';
 			for (i = 0; query_kv_pairs[i]; i += 2) {
-				if (i) strcat(q, "&");
+				if (i) {
+					strcat(q, "&");
+				}
 				strcat(q, query_kv_pairs[i]);
 				strcat(q, "=");
-				if (query_kv_pairs[i + 1]) strcat(q, query_kv_pairs[i + 1]);
+				if (query_kv_pairs[i + 1])
+					strcat(q, query_kv_pairs[i + 1]);
 			}
 			ret = mcpkg_net_url_set_query(u, q);
 			free(q);
@@ -335,8 +279,6 @@ static int build_request_url(McPkgNetClient *c,
 	*out_url = url;
 	return MCPKG_NET_NO_ERROR;
 }
-
-/* ---------------- public request API ---------------- */
 
 MCPKG_API int
 mcpkg_net_request(McPkgNetClient *c,
@@ -375,7 +317,7 @@ mcpkg_net_request(McPkgNetClient *c,
 
 	/* duplicate headers for this request */
 	if (c->headers) {
-		hdr = slist_dup(c->headers);
+		hdr = mcpkg_net_curl_slist_dup(c->headers);
 		if (!hdr) {
 			curl_easy_cleanup(eh);
 			free(url);
@@ -425,7 +367,7 @@ mcpkg_net_request(McPkgNetClient *c,
 	{
 		CURLcode ce = curl_easy_perform(eh);
 		if (ce != CURLE_OK) {
-			ret = curlcode2neterr(ce);
+			ret = mcpkg_net_curl_to_net_error(ce);
 			goto done;
 		}
 	}

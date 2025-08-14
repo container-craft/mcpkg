@@ -37,9 +37,10 @@ struct McPkgNetDlResult {
 	size_t  bytes_written;  /* payload size written */
 };
 
-/* Lifecycle */
+
 MCPKG_API int  mcpkg_net_downloader_new(const struct McPkgNetDownloaderCfg *cfg,
                                         struct McPkgNetDownloader **out);
+
 MCPKG_API void mcpkg_net_downloader_free(struct McPkgNetDownloader *dl);
 
 /* Enqueue a GET to 'path' (interpreted relative to client's base URL),
